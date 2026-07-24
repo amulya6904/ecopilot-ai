@@ -1,0 +1,167 @@
+"""Validated, immutable settings for EcoPilot AI Phase 1."""
+
+from dataclasses import dataclass, field
+from types import MappingProxyType
+from typing import Mapping
+
+
+@dataclass(frozen=True)
+class SimulationSettings:
+    """Time and reproducibility settings for the future simulator."""
+    start_hour: int = 8
+    end_hour: int = 20
+    step_minutes: int = 5
+    random_seed: int = 42
+    dashboard_step_seconds: float = 1.0
+    prediction_horizon_steps: int = 3
+
+    def __post_init__(self) -> None:
+        duration_minutes = (self.end_hour - self.start_hour) * 60
+        if not 0 <= self.start_hour <= 23 or not 1 <= self.end_hour <= 24:
+            raise ValueError("Simulation hours are outside their valid ranges.")
+        if self.end_hour <= self.start_hour:
+            raise ValueError("Simulation end must be later than its start.")
+        if self.step_minutes <= 0 or duration_minutes % self.step_minutes:
+            raise ValueError("Step must be positive and divide the simulation duration.")
+        if self.prediction_horizon_steps <= 0:
+            raise ValueError("Prediction horizon must be positive.")
+
+    @property
+    def total_steps(self) -> int:
+        """Return the number of simulation intervals."""
+        return (self.end_hour - self.start_hour) * 60 // self.step_minutes
+
+
+@dataclass(frozen=True)
+class ComfortSettings:
+    """Occupied, unoccupied, and critical temperature boundaries."""
+    occupied_preferred_min_c: float = 23.0
+    occupied_preferred_max_c: float = 24.0
+    occupied_allowed_min_c: float = 22.0
+    occupied_allowed_max_c: float = 25.0
+    unoccupied_allowed_min_c: float = 20.0
+    unoccupied_allowed_max_c: float = 28.0
+    critical_min_temperature_c: float = 20.0
+    critical_max_temperature_c: float = 27.0
+
+    def __post_init__(self) -> None:
+        ranges = (
+            (self.occupied_preferred_min_c, self.occupied_preferred_max_c),
+            (self.occupied_allowed_min_c, self.occupied_allowed_max_c),
+            (self.unoccupied_allowed_min_c, self.unoccupied_allowed_max_c),
+            (self.critical_min_temperature_c, self.critical_max_temperature_c),
+        )
+        if any(low >= high for low, high in ranges):
+            raise ValueError("Every comfort minimum must be below its maximum.")
+        if not (self.occupied_allowed_min_c <= self.occupied_preferred_min_c
+                and self.occupied_preferred_max_c <= self.occupied_allowed_max_c):
+            raise ValueError("Preferred range must be inside the occupied allowed range.")
+        if not (self.critical_min_temperature_c <= self.occupied_allowed_min_c
+                and self.occupied_allowed_max_c <= self.critical_max_temperature_c):
+            raise ValueError("Critical limits conflict with the occupied allowed range.")
+
+
+@dataclass(frozen=True)
+class AirQualitySettings:
+    """CO2 thresholds in parts per million."""
+    outdoor_co2_ppm: float = 420.0
+    normal_co2_max_ppm: float = 800.0
+    allowed_co2_max_ppm: float = 1000.0
+    warning_co2_max_ppm: float = 1200.0
+    critical_co2_max_ppm: float = 1500.0
+
+    def __post_init__(self) -> None:
+        values = (self.outdoor_co2_ppm, self.normal_co2_max_ppm,
+                  self.allowed_co2_max_ppm, self.warning_co2_max_ppm,
+                  self.critical_co2_max_ppm)
+        if any(left >= right for left, right in zip(values, values[1:])):
+            raise ValueError("Air-quality thresholds must be strictly increasing.")
+
+
+@dataclass(frozen=True)
+class HVACSettings:
+    """Equipment limits and future optimizer candidate controls."""
+    minimum_setpoint_c: float = 20.0
+    maximum_setpoint_c: float = 28.0
+    minimum_fan_speed_percent: int = 20
+    maximum_fan_speed_percent: int = 100
+    maximum_setpoint_change_c: float = 2.0
+    maximum_fan_speed_change_percent: int = 30
+    setpoint_candidates_c: tuple[float, ...] = (21., 22., 23., 24., 25., 26., 27.)
+    fan_speed_candidates_percent: tuple[int, ...] = (30, 50, 70, 90)
+    ventilation_candidates: tuple[str, ...] = ("low", "medium", "high")
+    ventilation_multipliers: Mapping[str, float] = field(
+        default_factory=lambda: MappingProxyType({"low": 0.3, "medium": 0.6, "high": 1.0})
+    )
+
+    def __post_init__(self) -> None:
+        if self.minimum_setpoint_c >= self.maximum_setpoint_c:
+            raise ValueError("Minimum setpoint must be below maximum setpoint.")
+        if any(not self.minimum_setpoint_c <= value <= self.maximum_setpoint_c
+               for value in self.setpoint_candidates_c):
+            raise ValueError("Candidate setpoint is outside HVAC limits.")
+        if any(not self.minimum_fan_speed_percent <= value <= self.maximum_fan_speed_percent
+               for value in self.fan_speed_candidates_percent):
+            raise ValueError("Candidate fan speed is outside HVAC limits.")
+        if set(self.ventilation_candidates) != set(self.ventilation_multipliers):
+            raise ValueError("Ventilation candidates and multipliers must match.")
+        if self.maximum_setpoint_change_c <= 0 or self.maximum_fan_speed_change_percent <= 0:
+            raise ValueError("Maximum control changes must be positive.")
+
+
+@dataclass(frozen=True)
+class BaselineSettings:
+    """Fixed schedule used only as a future fair comparison reference."""
+    occupied_setpoint_c: float = 22.0
+    occupied_fan_speed_percent: int = 80
+    occupied_ventilation: str = "medium"
+    unoccupied_setpoint_c: float = 27.0
+    unoccupied_fan_speed_percent: int = 20
+    unoccupied_ventilation: str = "low"
+
+    def validate(self, hvac: HVACSettings) -> None:
+        """Validate fixed schedule values against equipment constraints."""
+        for value in (self.occupied_setpoint_c, self.unoccupied_setpoint_c):
+            if not hvac.minimum_setpoint_c <= value <= hvac.maximum_setpoint_c:
+                raise ValueError("Baseline setpoint is outside HVAC limits.")
+        for value in (self.occupied_fan_speed_percent, self.unoccupied_fan_speed_percent):
+            if not hvac.minimum_fan_speed_percent <= value <= hvac.maximum_fan_speed_percent:
+                raise ValueError("Baseline fan speed is outside HVAC limits.")
+        if ({self.occupied_ventilation, self.unoccupied_ventilation}
+                - set(hvac.ventilation_candidates)):
+            raise ValueError("Baseline ventilation level is invalid.")
+
+
+@dataclass(frozen=True)
+class OptimizationSettings:
+    """Weights and reference values for the future deterministic optimizer.
+
+    Future score: energy cost + comfort penalty + CO2 penalty + carbon penalty
+    + control-change penalty. No optimization algorithm exists in Phase 1.
+    """
+    energy_weight: float = 1.0
+    comfort_penalty_weight: float = 25.0
+    co2_penalty_weight: float = 30.0
+    carbon_weight: float = 0.002
+    control_change_penalty_weight: float = 0.5
+    low_carbon_intensity_g_per_kwh: float = 250.0
+    high_carbon_intensity_g_per_kwh: float = 700.0
+    default_electricity_price_per_kwh: float = 8.0
+    currency_code: str = "INR"
+
+    def __post_init__(self) -> None:
+        numeric_values = (value for name, value in vars(self).items()
+                          if name != "currency_code")
+        if any(value < 0 for value in numeric_values):
+            raise ValueError("Optimization numeric values must be non-negative.")
+        if not self.currency_code.strip():
+            raise ValueError("Currency code must not be empty.")
+
+
+SIMULATION = SimulationSettings()
+COMFORT = ComfortSettings()
+AIR_QUALITY = AirQualitySettings()
+HVAC = HVACSettings()
+BASELINE = BaselineSettings()
+BASELINE.validate(HVAC)
+OPTIMIZATION = OptimizationSettings()
