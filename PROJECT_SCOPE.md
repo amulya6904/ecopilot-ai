@@ -60,6 +60,20 @@ The custom simulator will be built first. EnergyPlus will later be accessed thro
 an adapter for zone temperature, outdoor conditions, energy readings, and possibly
 HVAC setpoint actuators.
 
+## Phase 2 deliverable
+
+Phase 2 implements a seeded lightweight digital twin for the configured Open Office,
+Conference Room, and Computer Lab. It models interpolated outdoor conditions,
+zone-specific occupancy, temperature, humidity, CO2, HVAC power, interval and
+cumulative energy, comfort classification, full-day history, heat-wave scenarios,
+reset reproducibility, external fixed HVAC actions, DataFrame output, and optional
+CSV export.
+
+The simulator produces 144 five-minute intervals and 432 zone records from 08:00
+through 19:55. It is intended for relative hackathon controller evaluation and is
+not a calibrated EnergyPlus replacement. No controller, prediction, optimization,
+safety execution, MCP, LLM, or EnergyPlus functionality is implemented.
+
 ## Phase priority order
 
 1. Custom simulator
@@ -74,5 +88,5 @@ HVAC setpoint actuators.
 10. Local LLM
 11. EnergyPlus adapter
 
-Only requirement freezing, configuration, structure, environment setup, the initial
-Streamlit shell, tests, and documentation are implemented in Phase 1.
+Phase 1 requirement freezing and Phase 2 custom simulation are implemented.
+Phase 3 (the fixed baseline controller) and all later phases remain not started.

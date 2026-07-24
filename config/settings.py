@@ -1,4 +1,4 @@
-"""Validated, immutable settings for EcoPilot AI Phase 1."""
+"""Validated, immutable settings for EcoPilot AI."""
 
 from dataclasses import dataclass, field
 from types import MappingProxyType
@@ -158,6 +158,97 @@ class OptimizationSettings:
             raise ValueError("Currency code must not be empty.")
 
 
+@dataclass(frozen=True)
+class SimulatorPhysicsSettings:
+    """Central coefficients and bounds for the Phase 2 digital twin."""
+
+    default_setpoint_c: float = 24.0
+    default_fan_speed_percent: int = 50
+    default_ventilation_level: str = "medium"
+    outdoor_heat_transfer_per_hour: float = 0.12
+    occupant_heat_gain_c_per_hour: float = 0.80
+    cooling_effect_c_per_hour: float = 5.50
+    temperature_noise_std_c: float = 0.03
+    humidity_noise_std_percent: float = 0.15
+    weather_temperature_noise_std_c: float = 0.20
+    weather_humidity_noise_std_percent: float = 0.40
+    minimum_temperature_c: float = 15.0
+    maximum_temperature_c: float = 40.0
+    minimum_humidity_percent: float = 20.0
+    maximum_humidity_percent: float = 80.0
+    maximum_co2_ppm: float = 3000.0
+    low_equipment_heat_gain_c_per_hour: float = 0.25
+    medium_equipment_heat_gain_c_per_hour: float = 0.50
+    high_equipment_heat_gain_c_per_hour: float = 0.90
+    co2_generation_factor: float = 0.35
+    low_ventilation_removal_fraction: float = 0.03
+    medium_ventilation_removal_fraction: float = 0.08
+    high_ventilation_removal_fraction: float = 0.15
+    humidity_outdoor_transfer_per_hour: float = 0.08
+    humidity_occupant_gain_per_hour: float = 0.60
+    humidity_dehumidification_per_hour: float = 1.20
+    minimum_hvac_power_fraction: float = 0.0
+    maximum_hvac_power_fraction: float = 1.0
+
+    def validate(self, hvac: HVACSettings, air_quality: AirQualitySettings) -> None:
+        """Validate physics coefficients against Phase 1 equipment settings."""
+        rate_names = (
+            "outdoor_heat_transfer_per_hour", "occupant_heat_gain_c_per_hour",
+            "cooling_effect_c_per_hour", "temperature_noise_std_c",
+            "humidity_noise_std_percent", "weather_temperature_noise_std_c",
+            "weather_humidity_noise_std_percent",
+            "low_equipment_heat_gain_c_per_hour",
+            "medium_equipment_heat_gain_c_per_hour",
+            "high_equipment_heat_gain_c_per_hour", "co2_generation_factor",
+            "humidity_outdoor_transfer_per_hour",
+            "humidity_occupant_gain_per_hour",
+            "humidity_dehumidification_per_hour",
+        )
+        if any(getattr(self, name) < 0 for name in rate_names):
+            raise ValueError("Simulator rates and noise values must be non-negative.")
+        if self.minimum_temperature_c >= self.maximum_temperature_c:
+            raise ValueError("Simulator temperature bounds are invalid.")
+        if self.minimum_humidity_percent >= self.maximum_humidity_percent:
+            raise ValueError("Simulator humidity bounds are invalid.")
+        if not hvac.minimum_setpoint_c <= self.default_setpoint_c <= hvac.maximum_setpoint_c:
+            raise ValueError("Default setpoint is outside HVAC limits.")
+        if not (hvac.minimum_fan_speed_percent <= self.default_fan_speed_percent
+                <= hvac.maximum_fan_speed_percent):
+            raise ValueError("Default fan speed is outside HVAC limits.")
+        if self.default_ventilation_level not in hvac.ventilation_candidates:
+            raise ValueError("Default ventilation level is invalid.")
+        removals = (
+            self.low_ventilation_removal_fraction,
+            self.medium_ventilation_removal_fraction,
+            self.high_ventilation_removal_fraction,
+        )
+        if any(not 0 <= value <= 1 for value in removals):
+            raise ValueError("Ventilation removal fractions must be between zero and one.")
+        if self.maximum_co2_ppm <= air_quality.outdoor_co2_ppm:
+            raise ValueError("Maximum CO2 must exceed outdoor CO2.")
+        if not (0 <= self.minimum_hvac_power_fraction
+                <= self.maximum_hvac_power_fraction <= 1):
+            raise ValueError("HVAC power fractions must be ordered within zero and one.")
+
+    @property
+    def ventilation_removal_fractions(self) -> Mapping[str, float]:
+        """Return immutable ventilation-to-CO2-removal mappings."""
+        return MappingProxyType({
+            "low": self.low_ventilation_removal_fraction,
+            "medium": self.medium_ventilation_removal_fraction,
+            "high": self.high_ventilation_removal_fraction,
+        })
+
+    @property
+    def equipment_heat_gains(self) -> Mapping[str, float]:
+        """Return immutable equipment heat gains by configured level."""
+        return MappingProxyType({
+            "low": self.low_equipment_heat_gain_c_per_hour,
+            "medium": self.medium_equipment_heat_gain_c_per_hour,
+            "high": self.high_equipment_heat_gain_c_per_hour,
+        })
+
+
 SIMULATION = SimulationSettings()
 COMFORT = ComfortSettings()
 AIR_QUALITY = AirQualitySettings()
@@ -165,3 +256,5 @@ HVAC = HVACSettings()
 BASELINE = BaselineSettings()
 BASELINE.validate(HVAC)
 OPTIMIZATION = OptimizationSettings()
+SIMULATOR_PHYSICS = SimulatorPhysicsSettings()
+SIMULATOR_PHYSICS.validate(HVAC, AIR_QUALITY)

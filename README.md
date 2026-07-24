@@ -2,56 +2,86 @@
 
 **Autonomous Smart Building Energy and Comfort Optimization**
 
-EcoPilot AI is a two-day Honeywell recruitment hackathon project. It addresses the
-problem of balancing occupant comfort, indoor air quality, energy cost, and carbon
-impact in commercial buildings. The proposed solution is a future deterministic,
-predictive, closed-loop controller with an independent safety supervisor and a fixed
-baseline for fair comparison.
+EcoPilot AI is a Honeywell recruitment hackathon project exploring transparent,
+safe HVAC control for a three-zone commercial building. Phase 1 froze requirements
+and configuration. **Phase 2 — Custom Multi-Zone Building Simulator is complete.**
+Prediction, controllers, optimization, and autonomous operation are not implemented.
 
-## Phase 1 status
+> The Phase 2 simulator is a lightweight deterministic digital twin created for
+> hackathon development and relative controller evaluation. It is not a calibrated
+> substitute for EnergyPlus.
 
-Phase 1 freezes requirements, configures three zones and system constraints, creates
-the development structure, and provides a Streamlit configuration dashboard and
-tests. It contains no simulation, optimization, autonomous control, or claimed
-energy savings.
+## Problem and proposed solution
 
-## Future architecture
+Commercial HVAC must balance comfort, indoor air quality, energy, cost, and carbon.
+The future platform will compare a fixed baseline with safety-supervised,
+deterministic control. Phase 2 provides the repeatable test environment required
+before any controller is built.
 
-Future sensor/state inputs will feed a custom multi-zone simulator and forecasts.
-A deterministic optimizer will evaluate candidate HVAC actions, a safety supervisor
-will accept or reject them, and closed-loop execution will update the simulator.
-The dashboard will compare the result with a non-intelligent fixed-schedule baseline.
-MCP and a local LLM will later provide tool-based natural-language interaction;
-EnergyPlus will remain behind an adapter.
+## Simulator architecture
+
+- `EnvironmentState`, `HVACAction`, `ZoneRuntime`, and immutable `ZoneState` records
+  define boundaries between simulator components.
+- `weather.py` interpolates outdoor conditions and applies time-of-use price/carbon
+  schedules.
+- `occupancy.py` generates independent office, conference, and lab schedules.
+- `zone.py` combines thermal, humidity, CO2, and energy models.
+- `building.py` owns time, independent seeded random streams, history, reset, and
+  stable DataFrame export.
+
+The building runs from 08:00 through 19:55 in 144 five-minute intervals. Three zone
+records per interval produce exactly **432 records**.
+
+## Models
+
+### Weather
+
+Outdoor temperature follows anchors of 25°C at 08:00, 28°C at 10:00, 31°C at
+12:00, 34°C at 15:00, 29°C at 18:00, and 27°C at 20:00. Humidity is similarly
+interpolated. Price is 7/10/8 INR per kWh and carbon intensity is 350/650/450
+gCO2 per kWh across morning, daytime, and evening periods. Heat-wave mode adds 5°C.
+
+### Occupancy
+
+The office has arrival, working, lunch, afternoon, departure, and after-hours
+ranges. Conference occupancy appears only in three meeting windows. The computer
+lab follows four class windows. Every value is bounded by configured capacity.
+
+### Zone physics
+
+Temperature combines outdoor heat transfer, occupancy heat, zone equipment heat,
+compressor/fan cooling, and small seeded noise. Humidity combines outdoor transfer,
+occupant moisture, compressor dehumidification, and noise. CO2 combines occupant
+generation with low/medium/high ventilation removal and trends toward outdoor CO2
+when empty.
+
+HVAC power is a bounded fraction of zone capacity based on positive temperature
+error, fan speed, occupancy, and outdoor load. Interval energy is:
+
+```text
+interval_energy_kwh = hvac_power_kw × step_minutes / 60
+```
+
+The simulator accepts per-zone `HVACAction` objects. Missing actions use the fixed
+Phase 2 Default HVAC action: 24°C, 50% fan, medium ventilation. This action is not
+optimized.
+
+## Reproducibility
+
+Weather, occupancy, and each zone receive independent random streams derived from
+the chosen seed. Seed 42 reproduces identical results; changing a seed changes noisy
+values without changing structure. `reset()` recreates all streams and reproduces
+the original run exactly.
 
 ## Building zones
 
-| ID | Zone | Area | Capacity | Heat level | HVAC limit |
+| ID | Name | Area | Capacity | Equipment heat | HVAC capacity |
 |---|---|---:|---:|---|---:|
 | `office` | Open Office | 150 m² | 30 | Medium | 12 kW |
 | `conference` | Conference Room | 50 m² | 12 | Low | 6 kW |
 | `lab` | Computer Lab | 100 m² | 25 | High | 14 kW |
 
-## Configuration summary
-
-- Simulation: 08:00–20:00, 5-minute intervals, 144 total steps
-- Forecast horizon: 3 steps (15 minutes)
-- Occupied preferred range: 23–24°C; allowed range: 22–25°C
-- HVAC candidates: setpoints 21–27°C, fan speeds 30/50/70/90%, and
-  low/medium/high ventilation
-- Baseline: fixed occupied and unoccupied schedules; it does not respond to actual
-  occupancy
-- Future objective: energy cost + comfort penalty + CO2 penalty + carbon penalty +
-  control-change penalty
-
-## Repository structure
-
-`config/` contains the only operational domain code in Phase 1. `app.py` renders the
-configuration shell, and `tests/` validates it. The remaining packages reserve clear
-boundaries for the simulator, controllers, prediction, explanations, persistence,
-expanded UI, MCP, LLM, and EnergyPlus adapter; their modules are documentation-only.
-
-## Installation (Windows PowerShell)
+## Installation on Windows PowerShell
 
 Python 3.11 or newer is required.
 
@@ -63,30 +93,56 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-EnergyPlus, MCP, and Ollama are intentionally not installed during Phase 1.
+EnergyPlus, MCP, and Ollama remain intentionally uninstalled.
 
-## Run and test
+## Run
+
+Run tests:
 
 ```powershell
 pytest -q
+```
+
+Run the CLI demo and write `data/phase2_simulation.csv`:
+
+```powershell
+python -m scripts.run_phase2_demo
+```
+
+Run the Streamlit dashboard:
+
+```powershell
 streamlit run app.py
 ```
 
-The expected Phase 1 dashboard shows the three zones, timing and comfort KPIs,
-safety constraints, fixed baseline configuration, future optimizer candidates, and
-the phase roadmap. It shows no live sensor readings or performance claims.
+Choose **Phase 2 simulator validation**, optionally enable Heat Wave Scenario, and
+select **Run Full-Day Simulation**. The page shows validation KPIs, latest states,
+four zone charts, and a CSV download.
 
-## Current limitations and next phase
+## Repository structure
 
-There is no building/weather/occupancy/CO2/energy simulation, controller, predictor,
-safety execution, database, MCP service, LLM integration, EnergyPlus integration, or
-real-time charting. Phase 2 will implement the custom building simulator only.
+- `config/`: validated Phase 1 settings and centralized Phase 2 coefficients
+- `simulator/`: data models and implemented Phase 2 digital twin
+- `scripts/`: CLI validation/export utility
+- `tests/`: Phase 1 regression and Phase 2 behavioral tests
+- `data/`: generated CSV destination; CSV files are ignored by Git
+- `controllers/`, `prediction/`, `mcp_service/`, `llm/`,
+  `energyplus_adapter/`: future boundaries only
+
+## Known limitations and Phase 3 preview
+
+The equations are intentionally lightweight, not calibrated against a real building,
+and do not model thermal mass, solar gain, detailed airflow, latent loads, or
+equipment cycling. CSV is the only optional persistence. There are no savings
+claims, predictions, safety execution, database, external APIs, or real sensors.
+
+Phase 3 will implement the fixed-schedule baseline controller against this simulator.
+It is not part of the current implementation.
 
 ## Troubleshooting
 
-- If activation is blocked, run the provided process-scoped `Set-ExecutionPolicy`
-  command and activate again.
-- If `streamlit` or `pytest` is not recognized, activate the virtual environment and
-  run `pip install -r requirements.txt`.
-- Run commands from the repository root so Python can import `config`.
-- If port 8501 is occupied, use `streamlit run app.py --server.port 8502`.
+- Run commands from the repository root.
+- If PowerShell blocks activation, run the process-scoped execution-policy command.
+- If a command is missing, activate the virtual environment and reinstall
+  `requirements.txt`.
+- If port 8501 is busy, run `streamlit run app.py --server.port 8502`.

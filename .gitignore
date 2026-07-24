@@ -14,3 +14,5 @@ Thumbs.db
 .idea/
 energyplus_output/
 ollama_models/
+data/*.csv
+!data/.gitkeep
