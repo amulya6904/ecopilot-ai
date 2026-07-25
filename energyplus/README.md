@@ -88,3 +88,13 @@ existing verified EnergyPlus example model. Original EnergyPlus zone identifiers
 are preserved, while display aliases are used for presentation. This phase does
 not implement MCP, an open-source LLM, actuator injection, autonomous control,
 optimization, or savings comparison.
+
+## Phase 6 MCP access
+
+Phase 6 exposes Phase 4 readiness and persisted Phase 5 official artifacts through
+a local official-SDK `mcp==1.28.1` stdio server. It reuses EnergyPlus discovery,
+the baseline runner, normalized telemetry, metrics, manifest, and diagnostics.
+It does not add runtime callbacks or modify actuators, schedules, or setpoints.
+
+Run `python -m scripts.test_phase6_mcp_client` for an SDK-level smoke test. Add
+`--run-baseline` only when a new controlled official execution is intended.

@@ -207,3 +207,24 @@ existing verified EnergyPlus example model. Original EnergyPlus zone identifiers
 are preserved, while display aliases are used for presentation. This phase does not
 implement MCP, an open-source LLM, actuator injection, autonomous control,
 optimization, or savings comparison.
+
+## Phase 6 MCP boundary
+
+```text
+MCP client
+    | local stdio (official mcp==1.28.1 SDK)
+FastMCP server
+    | strict validation, response limits, audit, error translation
+MCPApplicationContext
+    +-- EnergyPlus discovery/backend
+    +-- existing Phase 5 official baseline runner
+    +-- frozen JSON/CSV artifacts and manifest
+    +-- normalized telemetry, metrics, and diagnostics
+```
+
+The MCP layer loads persisted normalized products rather than duplicating raw
+EnergyPlus parsing or baseline metric calculation. Its only execution tool invokes
+`run_energyplus_baseline()` with configured paths under a single-process lock.
+No MCP tool modifies a schedule, actuator, thermostat, or setpoint.
+
+Phase 6 exposes the verified EnergyPlus and official baseline capabilities through a local MCP server. The server provides bounded, validated tools and read-only resources. It does not yet include an open-source LLM, autonomous reasoning, actuator injection, optimization, or closed-loop control.

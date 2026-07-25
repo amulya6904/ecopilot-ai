@@ -7,7 +7,7 @@
 | Phase 3 | Lightweight fixed baseline benchmark | Complete |
 | Phase 4 | EnergyPlus execution and initial official telemetry | Complete |
 | Phase 5 | Official fixed-schedule EnergyPlus baseline | Complete |
-| Phase 6 | MCP tools | Not started |
+| Phase 6 | MCP Tool Layer for EnergyPlus and official baseline data | Complete |
 | Phase 7 | Open-source LLM agent | Not started |
 | Phase 8 | Closed-loop EnergyPlus execution | Not started |
 | Phase 9 | Safety, PMV and constraints | Not started |
@@ -35,3 +35,9 @@ existing verified EnergyPlus example model. Original EnergyPlus zone identifiers
 are preserved, while display aliases are used for presentation. This phase does not
 implement MCP, an open-source LLM, actuator injection, autonomous control,
 optimization, or savings comparison.
+
+Phase 6 exposes the verified EnergyPlus and official baseline capabilities through a local MCP server. The server provides bounded, validated tools and read-only resources. It does not yet include an open-source LLM, autonomous reasoning, actuator injection, optimization, or closed-loop control.
+
+It uses official `mcp==1.28.1` over stdio and implements 16 tools, six resources,
+strict structured responses, audit logging, response limits, and a controlled
+single-process baseline execution lock.

@@ -43,3 +43,21 @@ existing verified EnergyPlus example model. Original EnergyPlus zone identifiers
 are preserved, while display aliases are used for presentation. This phase does
 not implement MCP, an open-source LLM, actuator injection, autonomous control,
 optimization, or savings comparison.
+
+## Phase 6 requirements
+
+| Requirement | Status |
+|---|---|
+| MCP server | Implemented |
+| Tool discovery | Implemented |
+| EnergyPlus data tools | Implemented |
+| Official baseline execution tool | Implemented |
+| Runtime-error tool | Implemented |
+| Audit logging | Implemented |
+| Open-source LLM | Not implemented |
+| Actuator injection | Not implemented |
+| Closed loop | Not implemented |
+
+Phase 6 uses the official MCP Python SDK `mcp==1.28.1`, local stdio, bounded
+structured responses, configured artifact roots, and controlled reuse of the
+existing Phase 5 runner.

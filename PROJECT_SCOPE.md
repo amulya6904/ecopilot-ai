@@ -131,4 +131,14 @@ but is excluded from occupied comfort metrics. Existing People, Lights,
 ElectricEquipment, ventilation, geometry, sizing, and HVAC availability schedules
 are frozen for future comparison.
 
-**Next: Phase 6 — bounded MCP tools.**
+## Implemented Phase 6 boundary
+
+Phase 6 exposes the verified EnergyPlus and official baseline capabilities through a local MCP server. The server provides bounded, validated tools and read-only resources. It does not yet include an open-source LLM, autonomous reasoning, actuator injection, optimization, or closed-loop control.
+
+The official-SDK stdio server provides discovery, status, baseline artifact, zone,
+facility, comfort, thermostat-adherence, diagnostics, and one controlled official
+baseline-run tool. Callers cannot select paths, commands, executables, models,
+weather files, output locations, or environment values. Phase 7 is the next
+handoff for open-source LLM integration.
+
+**Next: Phase 7 — open-source LLM integration using bounded MCP tools.**

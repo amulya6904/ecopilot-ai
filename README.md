@@ -24,7 +24,8 @@ a closed loop.
 - Phase 3: lightweight fixed-schedule development baseline — complete
 - Phase 4: EnergyPlus execution and initial official telemetry — complete
 - Phase 5: official fixed-schedule EnergyPlus baseline — complete
-- Phase 6 onward — not started
+- Phase 6: local MCP tool layer — complete
+- Phase 7 onward — not started
 
 The existing three-zone custom simulator is preserved as a lightweight development
 digital twin test harness and fallback backend. It validates control interfaces,
@@ -217,4 +218,21 @@ unavailable in the retained example model. Two known non-fatal diagnostics are
 retained: the Chicago-IDF/Bengaluru-EPW location mismatch and the requested but
 unavailable Fanger outputs.
 
-**Next phase: Phase 6 — bounded MCP tools.**
+## Phase 6 — local MCP tool layer
+
+Phase 6 exposes the verified EnergyPlus and official baseline capabilities through a local MCP server. The server provides bounded, validated tools and read-only resources. It does not yet include an open-source LLM, autonomous reasoning, actuator injection, optimization, or closed-loop control.
+
+The service uses the official `mcp==1.28.1` Python SDK over stdio. It exposes 16
+structured tools and six JSON resources. Its only execution tool calls the
+existing Phase 5 runner through a lock; all other tools read verified artifacts.
+Calls are record/size bounded and audited to JSON Lines.
+
+```powershell
+python -m scripts.run_phase6_mcp_server
+python -m scripts.test_phase6_mcp_client
+```
+
+See `docs/MCP_TOOLS.md` and `docs/MCP_SECURITY.md`. Phase 7 is the handoff for
+future open-source LLM integration.
+
+**Next phase: Phase 7 — open-source LLM integration using bounded MCP tools.**
