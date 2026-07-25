@@ -1,4 +1,4 @@
-"""Full-day orchestration for the three-zone Phase 2 digital twin."""
+"""Full-day orchestration for the Phase 2 lightweight development simulator."""
 
 from dataclasses import asdict
 from datetime import datetime, timedelta

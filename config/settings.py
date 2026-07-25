@@ -160,7 +160,7 @@ class OptimizationSettings:
 
 @dataclass(frozen=True)
 class SimulatorPhysicsSettings:
-    """Central coefficients and bounds for the Phase 2 digital twin."""
+    """Central coefficients and bounds for the Phase 2 development harness."""
 
     default_setpoint_c: float = 24.0
     default_fan_speed_percent: int = 50
@@ -249,6 +249,101 @@ class SimulatorPhysicsSettings:
         })
 
 
+@dataclass(frozen=True)
+class EnergyPlusSettings:
+    """Phase 4 connection settings for the required final simulation engine.
+
+    Paths are intentionally not checked yet so Phases 1-3 remain usable without
+    an EnergyPlus installation or building/weather model files.
+    """
+
+    enabled: bool = False
+    executable_path: str = ""
+    idf_path: str = "energyplus/models/baseline.idf"
+    epw_path: str = ""
+    output_directory: str = "energyplus/output"
+    logs_directory: str = "energyplus/logs"
+    modified_models_directory: str = "energyplus/models/modified"
+    control_interval_minutes: int = 15
+    timeout_seconds: int = 180
+    primary_backend: str = "energyplus"
+    fallback_backend: str = "lightweight"
+
+    def __post_init__(self) -> None:
+        valid_backends = {"energyplus", "lightweight"}
+        if self.control_interval_minutes <= 0:
+            raise ValueError("EnergyPlus control interval must be positive.")
+        if self.timeout_seconds <= 0:
+            raise ValueError("EnergyPlus timeout must be positive.")
+        if self.primary_backend not in valid_backends:
+            raise ValueError("Primary backend must be energyplus or lightweight.")
+        if self.fallback_backend not in valid_backends:
+            raise ValueError("Fallback backend must be energyplus or lightweight.")
+
+
+@dataclass(frozen=True)
+class AgentSettings:
+    """Configuration boundary for a future open-source LLM agent."""
+
+    enabled: bool = False
+    provider: str = "ollama"
+    model_name: str = "qwen2.5"
+    request_timeout_seconds: int = 30
+    maximum_retries: int = 2
+    maximum_context_records: int = 100
+    tool_calling_enabled: bool = False
+    mcp_enabled: bool = False
+
+    def __post_init__(self) -> None:
+        if not self.provider.strip() or not self.model_name.strip():
+            raise ValueError("Agent provider and model name must not be empty.")
+        if self.request_timeout_seconds <= 0:
+            raise ValueError("Agent request timeout must be positive.")
+        if self.maximum_retries < 0:
+            raise ValueError("Agent maximum retries must not be negative.")
+        if self.maximum_context_records <= 0:
+            raise ValueError("Agent context record limit must be positive.")
+
+
+@dataclass(frozen=True)
+class ComfortEvaluationSettings:
+    """PMV targets with an explicit temperature fallback for development data."""
+
+    pmv_preferred_min: float = -0.5
+    pmv_preferred_max: float = 0.5
+    pmv_allowed_min: float = -1.0
+    pmv_allowed_max: float = 1.0
+    use_temperature_fallback_when_pmv_unavailable: bool = True
+
+    def __post_init__(self) -> None:
+        if self.pmv_preferred_min >= self.pmv_preferred_max:
+            raise ValueError("Preferred PMV minimum must be below its maximum.")
+        if self.pmv_allowed_min >= self.pmv_allowed_max:
+            raise ValueError("Allowed PMV minimum must be below its maximum.")
+        if not (
+            self.pmv_allowed_min <= self.pmv_preferred_min
+            and self.pmv_preferred_max <= self.pmv_allowed_max
+        ):
+            raise ValueError("Preferred PMV range must be inside the allowed range.")
+
+
+@dataclass(frozen=True)
+class PeakDemandSettings:
+    """Prototype demand thresholds to calibrate against EnergyPlus in Phase 4."""
+
+    enabled: bool = True
+    warning_threshold_kw: float = 24.0
+    critical_threshold_kw: float = 30.0
+
+    def __post_init__(self) -> None:
+        if self.warning_threshold_kw <= 0:
+            raise ValueError("Peak-demand warning threshold must be positive.")
+        if self.critical_threshold_kw <= self.warning_threshold_kw:
+            raise ValueError(
+                "Peak-demand critical threshold must exceed the warning threshold."
+            )
+
+
 SIMULATION = SimulationSettings()
 COMFORT = ComfortSettings()
 AIR_QUALITY = AirQualitySettings()
@@ -258,3 +353,7 @@ BASELINE.validate(HVAC)
 OPTIMIZATION = OptimizationSettings()
 SIMULATOR_PHYSICS = SimulatorPhysicsSettings()
 SIMULATOR_PHYSICS.validate(HVAC, AIR_QUALITY)
+ENERGYPLUS = EnergyPlusSettings()
+AGENT = AgentSettings()
+COMFORT_EVALUATION = ComfortEvaluationSettings()
+PEAK_DEMAND = PeakDemandSettings()

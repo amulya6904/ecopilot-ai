@@ -1,10 +1,18 @@
-"""Streamlit dashboard for EcoPilot AI Phases 1 and 2."""
+"""Streamlit dashboard for EcoPilot AI Phases 1 through 3."""
 
 import pandas as pd
-import streamlit as st
+import plotly.express as px
 
+try:
+    import streamlit as st
+except ModuleNotFoundError:  # Allows architecture/import tests without UI extras.
+    st = None  # type: ignore[assignment]
+
+from backends import get_backend_status
 from config.settings import AIR_QUALITY, BASELINE, COMFORT, HVAC, OPTIMIZATION, SIMULATION
 from config.zones import ZONES
+from controllers.baseline import BaselineController, run_baseline_day
+from metrics.baseline_metrics import calculate_baseline_summary, calculate_zone_summary
 from simulator.building import BuildingSimulator
 
 
@@ -14,19 +22,47 @@ def _range_text(minimum: float, maximum: float) -> str:
 
 def _phase_table() -> pd.DataFrame:
     phases = [
-        ("Phase 1", "Setup and requirements", "Complete"),
-        ("Phase 2", "Building simulator", "Complete"),
-        ("Phase 3", "Baseline controller", "Not started"),
-        ("Phase 4", "Prediction", "Not started"),
-        ("Phase 5", "Optimization", "Not started"),
-        ("Phase 6", "Safety and closed loop", "Not started"),
-        ("Phase 7", "Dashboard expansion", "Not started"),
-        ("Phase 8", "Metrics", "Not started"),
-        ("Phase 9", "MCP", "Not started"),
-        ("Phase 10", "LLM", "Not started"),
-        ("Phase 11", "EnergyPlus", "Not started"),
+        ("Phase 1", "Configuration and architecture foundation", "Complete"),
+        ("Phase 2", "Lightweight development simulator", "Complete"),
+        ("Phase 3", "Lightweight fixed baseline benchmark", "Complete"),
+        ("Phase 4", "EnergyPlus integration", "Not started"),
+        ("Phase 5", "EnergyPlus baseline", "Not started"),
+        ("Phase 6", "MCP tools", "Not started"),
+        ("Phase 7", "Open-source LLM agent", "Not started"),
+        ("Phase 8", "Closed-loop EnergyPlus execution", "Not started"),
+        ("Phase 9", "Safety, PMV, and constraints", "Not started"),
+        ("Phase 10", "Quantitative comparison", "Not started"),
+        ("Phase 11", "Final dashboard", "Not started"),
+        ("Phase 12", "Submission material", "Not started"),
     ]
     return pd.DataFrame(phases, columns=("Phase", "Focus", "Status"))
+
+
+def _render_project_status() -> None:
+    """Show the required target and the honest current implementation state."""
+
+    statuses = get_backend_status()
+    st.info(
+        "**Project status:** EnergyPlus is the primary required final engine. "
+        "Current results are development-only."
+    )
+    columns = st.columns(3)
+    columns[0].write("**Primary required engine**  \nEnergyPlus")
+    columns[1].write(
+        "**Current development backend**  \n"
+        f"{statuses['lightweight']['label']}"
+    )
+    columns[2].write("**EnergyPlus integration**  \nNot started")
+    with st.expander("Integration roadmap status"):
+        st.write({
+            "Lightweight backend": "Available",
+            "EnergyPlus backend": "Not connected",
+            "Official evaluation backend": "EnergyPlus required",
+            "Open-source LLM": "Not started",
+            "MCP tools": "Not started",
+            "Closed-loop EnergyPlus control": "Not started",
+            "Current results": "Development-only",
+        })
 
 
 def render_phase1() -> None:
@@ -98,7 +134,8 @@ def render_phase1() -> None:
         "Unoccupied ventilation": BASELINE.unoccupied_ventilation.title(),
     })
     st.info(
-        "This is configuration only. The Phase 3 baseline controller is not implemented."
+        "These settings drive the implemented Phase 3 development benchmark. "
+        "The official baseline will be generated with EnergyPlus."
     )
 
     st.header("Future EcoPilot Optimization Actions")
@@ -127,11 +164,20 @@ def _chart(frame: pd.DataFrame, value: str, title: str) -> None:
 
 def render_phase2() -> None:
     """Render an on-demand full-day simulator validation."""
-    st.header("Phase 2 — Building Simulator")
+    st.header("Phase 2 — Lightweight Development Simulator")
+    st.write("**Data source:** Lightweight Development Simulator")
     st.write(
-        "This lightweight digital twin models weather, occupancy, temperature, "
+        "This lightweight development digital twin models weather, occupancy, temperature, "
         "humidity, CO2, and HVAC energy for three zones at five-minute intervals."
     )
+    st.info(
+        "This simulator validates data flow, controls, metrics and UI behavior. "
+        "Final official evaluation will use EnergyPlus."
+    )
+    status_columns = st.columns(3)
+    status_columns[0].metric("Lightweight backend", "Available")
+    status_columns[1].metric("EnergyPlus backend", "Not connected")
+    status_columns[2].metric("Official evaluation backend", "EnergyPlus required")
     heat_wave = st.checkbox("Heat Wave Scenario", value=False)
     scenario_key = f"phase2_frame_{heat_wave}"
     if st.button("Run Full-Day Simulation", type="primary"):
@@ -159,7 +205,7 @@ def render_phase2() -> None:
         "Simulation energy under fixed Phase 2 test actions",
         f"{total_energy:.2f} kWh",
     )
-    st.success("Phase 2 validation run complete. Phase 3 is not started.")
+    st.success("Phase 2 development validation run complete.")
 
     st.subheader("Latest zone states")
     latest = frame.sort_values("timestamp").groupby("zone_id", as_index=False).tail(1)
@@ -176,23 +222,177 @@ def render_phase2() -> None:
     )
 
 
+def _plot_zone_line(
+    frame: pd.DataFrame, value: str, title: str, y_label: str
+) -> None:
+    figure = px.line(
+        frame, x="timestamp", y=value, color="zone_id",
+        title=title, labels={value: y_label, "timestamp": "Time", "zone_id": "Zone"},
+    )
+    st.plotly_chart(figure, use_container_width=True)
+
+
+def render_phase3() -> None:
+    """Render the conventional fixed-schedule baseline benchmark."""
+    st.header("Phase 3 — Fixed Baseline Controller")
+    st.write("**Data source:** Lightweight Development Simulator")
+    st.warning(
+        "This is a development benchmark. Final baseline savings claims must use "
+        "EnergyPlus under identical IDF and EPW conditions."
+    )
+    st.write(
+        "This page runs the lightweight simulator's conventional fixed-schedule "
+        "HVAC development benchmark. "
+        "It does not use prediction, actual occupancy awareness, or optimization."
+    )
+    heat_wave = st.checkbox("Heat Wave Scenario", value=False, key="phase3_heat_wave")
+    seed = int(st.number_input(
+        "Random seed", min_value=0, value=42, step=1, key="phase3_seed"
+    ))
+    scenario_key = f"phase3_results_{seed}_{heat_wave}"
+    if st.button("Run Baseline Simulation", type="primary"):
+        with st.spinner("Running fixed-schedule baseline..."):
+            results = run_baseline_day(
+                BuildingSimulator(random_seed=seed, heat_wave=heat_wave),
+                BaselineController(),
+            )
+            st.session_state[scenario_key] = (
+                results,
+                calculate_baseline_summary(results),
+                calculate_zone_summary(results),
+            )
+    stored = st.session_state.get(scenario_key)
+    if stored is None:
+        st.info("Press Run Baseline Simulation to create this benchmark scenario.")
+        return
+    results, summary, zone_summary = stored
+    st.success("Development baseline simulation completed successfully.")
+
+    cards = st.columns(3)
+    cards[0].metric("Development baseline energy", f"{summary['total_energy_kwh']:.2f} kWh")
+    cards[1].metric("Electricity cost", f"{summary['total_cost_inr']:.2f} INR")
+    cards[2].metric("Carbon emissions", f"{summary['total_carbon_kg']:.2f} kg CO2")
+    cards[0].metric("Peak HVAC power", f"{summary['peak_hvac_power_kw']:.2f} kW")
+    cards[1].metric("Comfort compliance", f"{summary['comfort_compliance_percent']:.1f}%")
+    cards[2].metric("CO2 compliance", f"{summary['co2_compliance_percent']:.1f}%")
+
+    st.subheader("Development baseline schedule")
+    schedule = pd.DataFrame([
+        {
+            "Schedule": "Occupied", "Setpoint": f"{BASELINE.occupied_setpoint_c:g}°C",
+            "Fan speed": f"{BASELINE.occupied_fan_speed_percent}%",
+            "Ventilation": BASELINE.occupied_ventilation,
+        },
+        {
+            "Schedule": "Unoccupied", "Setpoint": f"{BASELINE.unoccupied_setpoint_c:g}°C",
+            "Fan speed": f"{BASELINE.unoccupied_fan_speed_percent}%",
+            "Ventilation": BASELINE.unoccupied_ventilation,
+        },
+    ])
+    st.dataframe(schedule, hide_index=True, use_container_width=True)
+
+    _plot_zone_line(results, "hvac_setpoint_c", "HVAC setpoint by zone", "Setpoint (°C)")
+    _plot_zone_line(results, "fan_speed_percent", "Fan speed by zone", "Fan speed (%)")
+    _plot_zone_line(results, "indoor_temperature_c", "Indoor temperature by zone", "Temperature (°C)")
+    _plot_zone_line(results, "co2_ppm", "CO2 by zone", "CO2 (ppm)")
+    _plot_zone_line(results, "interval_energy_kwh", "Interval energy by zone", "Energy (kWh)")
+
+    intervals = results.assign(
+        interval_cost_inr=(
+            results["interval_energy_kwh"] * results["electricity_price_per_kwh"]
+        ),
+        interval_carbon_kg=(
+            results["interval_energy_kwh"]
+            * results["carbon_intensity_g_per_kwh"] / 1000
+        ),
+    )
+    by_time = intervals.groupby("timestamp", as_index=False)[
+        ["interval_energy_kwh", "interval_cost_inr", "interval_carbon_kg"]
+    ].sum()
+    by_time["cumulative_energy_kwh"] = by_time["interval_energy_kwh"].cumsum()
+    by_time["cumulative_cost_inr"] = by_time["interval_cost_inr"].cumsum()
+    by_time["cumulative_carbon_kg"] = by_time["interval_carbon_kg"].cumsum()
+    for value, title, label in (
+        ("cumulative_energy_kwh", "Cumulative building energy", "Energy (kWh)"),
+        ("cumulative_cost_inr", "Cumulative electricity cost", "Cost (INR)"),
+        ("cumulative_carbon_kg", "Cumulative carbon emissions", "Emissions (kg CO2)"),
+    ):
+        figure = px.line(
+            by_time, x="timestamp", y=value, title=title,
+            labels={"timestamp": "Time", value: label},
+        )
+        st.plotly_chart(figure, use_container_width=True)
+    energy_bar = px.bar(
+        zone_summary, x="zone_name", y="total_energy_kwh",
+        title="Total energy by zone",
+        labels={"zone_name": "Zone", "total_energy_kwh": "Energy (kWh)"},
+    )
+    st.plotly_chart(energy_bar, use_container_width=True)
+
+    st.subheader("Latest zone states")
+    latest = results.sort_values("timestamp").groupby("zone_id", as_index=False).tail(1)
+    st.dataframe(latest.round(2), hide_index=True, use_container_width=True)
+    st.subheader("Zone-wise development baseline summary")
+    st.dataframe(zone_summary.round(2), hide_index=True, use_container_width=True)
+    st.subheader("Schedule-boundary samples")
+    boundary = results[
+        results["timestamp"].dt.strftime("%H:%M").isin(["08:00", "09:00", "18:00"])
+    ][["timestamp", "zone_id", "hvac_setpoint_c", "fan_speed_percent", "ventilation_level"]]
+    st.dataframe(boundary, hide_index=True, use_container_width=True)
+
+    first, second = st.columns(2)
+    first.download_button(
+        "Download full baseline CSV",
+        results.to_csv(index=False).encode("utf-8"),
+        "ecopilot_phase3_baseline.csv", "text/csv",
+    )
+    second.download_button(
+        "Download zone summary CSV",
+        zone_summary.to_csv(index=False).encode("utf-8"),
+        "ecopilot_phase3_baseline_summary.csv", "text/csv",
+    )
+    st.subheader("Future official EnergyPlus metrics")
+    st.caption("Roadmap only — unavailable values are not represented as zero.")
+    st.write({
+        "EnergyPlus total electricity": "Not available",
+        "Peak demand": "Development-derived only; official value not available",
+        "PMV compliance": "Not available",
+        "EnergyPlus runtime errors": "Not available",
+        "EnergyPlus baseline IDF": "Not connected",
+        "Modified runtime IDFs": "Not implemented",
+    })
+
+
 def main() -> None:
     """Render the EcoPilot AI dashboard."""
+    if st is None:
+        raise RuntimeError(
+            "Streamlit is required to launch the dashboard. "
+            "Install the dependencies from requirements.txt."
+        )
     st.set_page_config(page_title="EcoPilot AI", page_icon="🏢", layout="wide")
     st.title("EcoPilot AI")
     st.subheader("Autonomous Smart Building Energy and Comfort Optimization")
     st.write(
         "EcoPilot AI is being developed as a safe, predictive HVAC platform. "
-        "Phases 1 and 2 provide validated configuration and a repeatable simulator; "
-        "controllers, optimization, and closed-loop operation are not implemented."
+        "Phases 1–3 provide validated configuration, a repeatable lightweight "
+        "development simulator, and a development benchmark. EnergyPlus is required "
+        "for the final baseline and closed-loop evaluation."
     )
+    _render_project_status()
     page = st.sidebar.radio(
-        "Navigate", ("Phase 1 configuration", "Phase 2 simulator validation")
+        "Navigate", (
+            "Phase 1 configuration",
+            "Phase 2 lightweight simulator",
+            "Phase 3 development baseline",
+        )
     )
     if page == "Phase 1 configuration":
         render_phase1()
-    else:
+    elif page == "Phase 2 lightweight simulator":
         render_phase2()
+    else:
+        render_phase3()
     st.header("Phase Status")
     st.dataframe(_phase_table(), hide_index=True, use_container_width=True)
 

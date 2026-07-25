@@ -16,3 +16,13 @@ energyplus_output/
 ollama_models/
 data/*.csv
 !data/.gitkeep
+energyplus/output/*
+energyplus/logs/*
+energyplus/models/modified/*
+results/development/*.csv
+results/official/*.csv
+!energyplus/output/.gitkeep
+!energyplus/logs/.gitkeep
+!energyplus/models/modified/.gitkeep
+!results/development/.gitkeep
+!results/official/.gitkeep
