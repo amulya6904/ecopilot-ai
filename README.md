@@ -12,15 +12,17 @@ open-source LLM such as Qwen, Mistral, or Llama. Structured control proposals mu
 pass a deterministic safety validator before setpoints or supervisory overrides
 are injected into the next EnergyPlus interval.
 
-This repository does **not** yet execute EnergyPlus, connect an LLM, expose MCP
-tools, or run a closed loop. Phase 4 will begin that work.
+This repository now executes verified EnergyPlus 26.1 batch simulations for Phase 4.
+It does **not** connect an LLM, expose MCP tools, inject actuators, optimize controls,
+or run a closed loop.
 
 ## Current implemented phases
 
 - Phase 1: configuration and architecture foundation — updated and complete
 - Phase 2: Lightweight Development Simulator — complete
 - Phase 3: lightweight fixed-schedule development baseline — complete
-- Phase 4 onward — not started
+- Phase 4: EnergyPlus execution and initial official telemetry — complete
+- Phase 5 onward — not started
 
 The existing three-zone custom simulator is preserved as a lightweight development
 digital twin test harness and fallback backend. It validates control interfaces,
@@ -62,8 +64,9 @@ tiers.
 It maps existing `ZoneState` and `HVACAction` records to shared schemas. PMV remains
 `None` because the lightweight model does not calculate it.
 
-`EnergyPlusBackend` is an unavailable structural placeholder. It raises
-`NotImplementedError` for runtime operations and never silently falls back.
+`EnergyPlusBackend` discovers the configured engine and inputs, runs isolated batch
+simulations, retains diagnostics, and parses initial official telemetry. It never
+silently falls back. Runtime stepping and actuator callbacks remain unimplemented.
 
 ## Phase 3 development baseline
 
@@ -78,7 +81,7 @@ use prediction, an LLM, or optimization.
 
 ## Repository structure
 
-- `backends/`: application-facing protocol, lightweight adapter, EnergyPlus placeholder
+- `backends/`: application-facing protocol, lightweight adapter, EnergyPlus batch backend
 - `schemas/`: shared building state, control action, and runtime-error records
 - `config/`: validated simulation, EnergyPlus, agent, PMV, and peak-demand settings
 - `simulator/`: preserved Phase 2 lightweight development simulator
@@ -115,8 +118,21 @@ Phase 1–3 use.
 python -m pytest -q
 python -m scripts.run_phase2_demo
 python -m scripts.run_phase3_baseline
+python -m scripts.run_phase4_energyplus
 streamlit run app.py
 ```
+
+The Phase 4 run uses the preserved source IDF at
+`energyplus/models/base/phase4_base_model.idf` and the derived telemetry IDF at
+`energyplus/models/modified/phase4_telemetry_model.idf`. Added hourly requests are
+Zone Mean Air Temperature, Facility Total Electricity Demand Rate,
+Electricity:Facility, and Electricity:HVAC, plus Output:SQLite. The model already
+requested hourly Site Outdoor Air Drybulb Temperature.
+
+The verified source columns are `Electricity:Facility [J](Hourly)` and
+`Whole Building:Facility Total Electricity Demand Rate [W](Hourly)`. Facility
+electricity uses J / 3,600,000 to produce kWh; direct demand uses W / 1,000 to
+produce kW. Building values are held once per timestamp, separate from zone rows.
 
 The CLIs write preferred development paths:
 
@@ -126,14 +142,35 @@ The CLIs write preferred development paths:
 
 Compatibility copies continue to be written under `data/`.
 
+### Windows pytest troubleshooting
+
+Pytest creates a private, per-run directory under the operating-system temporary
+directory. The suite runs without pytest's optional repository cache because stale
+Windows processes can leave that shared directory locked. If a test run reports
+`WinError 5`, stop any running pytest or Streamlit process and close File Explorer
+windows opened inside pytest temporary folders. Then remove stale repository-local
+artifacts and rerun the tests:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/clean_test_artifacts.ps1
+python -m pytest -q
+```
+
+Running the development workflow as administrator is not required.
+
 ## Current limitations and next phase
 
 The lightweight model is not building-calibrated and omits detailed thermal mass,
 airflow, solar gain, latent loads, equipment cycling, and PMV. Its derived facility
 demand is development telemetry, not an official EnergyPlus demand result.
 
-No final baseline-versus-agent savings, PMV compliance, EnergyPlus runtime errors,
-LLM decisions, MCP calls, actuator injection, or closed-loop execution is currently
-available.
+No official fixed-schedule EnergyPlus baseline, baseline-versus-agent savings, PMV,
+CO2, LLM decisions, MCP calls, actuator injection, or closed-loop execution is
+currently available.
 
-**Next phase: Phase 4 — EnergyPlus Integration.**
+Phase 4 provides verified EnergyPlus execution, diagnostics, zone and outdoor
+temperature telemetry, facility electricity, and facility peak-demand telemetry.
+It does not implement an official fixed-schedule EnergyPlus baseline, actuator
+injection, MCP, LLM reasoning, optimization, or closed-loop control.
+
+**Next phase: Phase 5 — EnergyPlus Baseline.**

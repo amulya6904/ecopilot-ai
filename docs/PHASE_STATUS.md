@@ -5,7 +5,7 @@
 | Phase 1 | Configuration and architecture foundation | Updated and complete |
 | Phase 2 | Lightweight development simulator | Complete |
 | Phase 3 | Lightweight fixed baseline benchmark | Complete |
-| Phase 4 | EnergyPlus integration | Not started |
+| Phase 4 | EnergyPlus execution and initial official telemetry | Complete |
 | Phase 5 | EnergyPlus baseline | Not started |
 | Phase 6 | MCP tools | Not started |
 | Phase 7 | Open-source LLM agent | Not started |
@@ -15,6 +15,8 @@
 | Phase 11 | Final dashboard | Not started |
 | Phase 12 | Submission material | Not started |
 
-Current CSVs, metrics, and dashboard values are development-only. EnergyPlus, MCP,
-the open-source LLM, forward injection, and closed-loop evaluation are not
-implemented.
+Phase 2–3 CSVs and metrics remain development-only. Phase 4 provides verified
+EnergyPlus execution, diagnostics, zone and outdoor temperature telemetry, facility
+electricity, and facility peak-demand telemetry. It does not implement an official
+fixed-schedule EnergyPlus baseline, actuator injection, MCP, LLM reasoning,
+optimization, or closed-loop control.

@@ -1,4 +1,4 @@
-"""Streamlit dashboard for EcoPilot AI Phases 1 through 3."""
+"""Streamlit dashboard for EcoPilot AI Phases 1 through 4."""
 
 import pandas as pd
 import plotly.express as px
@@ -8,11 +8,14 @@ try:
 except ModuleNotFoundError:  # Allows architecture/import tests without UI extras.
     st = None  # type: ignore[assignment]
 
-from backends import get_backend_status
-from config.settings import AIR_QUALITY, BASELINE, COMFORT, HVAC, OPTIMIZATION, SIMULATION
+from backends import EnergyPlusBackend, get_backend_status
+from config.settings import (
+    AIR_QUALITY, BASELINE, COMFORT, ENERGYPLUS, HVAC, OPTIMIZATION, SIMULATION
+)
 from config.zones import ZONES
 from controllers.baseline import BaselineController, run_baseline_day
 from metrics.baseline_metrics import calculate_baseline_summary, calculate_zone_summary
+from energyplus.adapter.error_parser import classify_energyplus_warning
 from simulator.building import BuildingSimulator
 
 
@@ -21,11 +24,20 @@ def _range_text(minimum: float, maximum: float) -> str:
 
 
 def _phase_table() -> pd.DataFrame:
+    phase4_result = (
+        st.session_state.get("phase4_result")
+        if st is not None else None
+    )
+    phase4_status = (
+        "Complete"
+        if phase4_result is not None and phase4_result.success
+        else "Environment dependent"
+    )
     phases = [
         ("Phase 1", "Configuration and architecture foundation", "Complete"),
         ("Phase 2", "Lightweight development simulator", "Complete"),
         ("Phase 3", "Lightweight fixed baseline benchmark", "Complete"),
-        ("Phase 4", "EnergyPlus integration", "Not started"),
+        ("Phase 4", "EnergyPlus integration", phase4_status),
         ("Phase 5", "EnergyPlus baseline", "Not started"),
         ("Phase 6", "MCP tools", "Not started"),
         ("Phase 7", "Open-source LLM agent", "Not started"),
@@ -52,11 +64,21 @@ def _render_project_status() -> None:
         "**Current development backend**  \n"
         f"{statuses['lightweight']['label']}"
     )
-    columns[2].write("**EnergyPlus integration**  \nNot started")
+    columns[2].write(
+        "**EnergyPlus integration**  \n"
+        + (
+            "Installation detected; run not ready"
+            if statuses["energyplus"]["installed"]
+            else "Installation not detected"
+        )
+    )
     with st.expander("Integration roadmap status"):
         st.write({
             "Lightweight backend": "Available",
-            "EnergyPlus backend": "Not connected",
+            "EnergyPlus backend": (
+                "Installed; model/weather pending"
+                if statuses["energyplus"]["installed"] else "Unavailable"
+            ),
             "Official evaluation backend": "EnergyPlus required",
             "Open-source LLM": "Not started",
             "MCP tools": "Not started",
@@ -363,6 +385,185 @@ def render_phase3() -> None:
     })
 
 
+def render_phase4() -> None:
+    """Render EnergyPlus readiness and on-demand Phase 4 batch validation."""
+    st.header("Phase 4 — EnergyPlus Integration")
+    st.write(
+        "This phase validates the installed EnergyPlus engine, configured IDF and "
+        "EPW inputs, batch execution, diagnostics, and initial EnergyPlus-derived "
+        "telemetry. It does not perform AI control, optimization, actuator injection, "
+        "or closed-loop operation."
+    )
+    backend = EnergyPlusBackend()
+    status = backend.availability_status()
+    cards = st.columns(4)
+    cards[0].metric("Backend", backend.display_name)
+    cards[1].metric("Installation", "Detected" if status.installed else "Not detected")
+    cards[2].metric("Detected version", status.detected_version or "Not detected")
+    cards[3].metric(
+        "Simulation environment",
+        "Ready" if status.ready_for_run else "Not ready",
+    )
+    st.subheader("Configuration")
+    st.write({
+        "EnergyPlus home": str(status.installation_dir or ENERGYPLUS.installation_dir),
+        "Executable": str(status.executable_path or ENERGYPLUS.executable_path),
+        "IDD": str(status.idd_path or ENERGYPLUS.idd_path),
+        "Executable found": status.executable_found,
+        "IDD found": status.idd_found,
+        "IDF": str(ENERGYPLUS.base_model_path),
+        "EPW": str(ENERGYPLUS.weather_file_path),
+        "Model ready": status.model_exists,
+        "Weather ready": status.weather_exists,
+        "Full run readiness": status.ready_for_run,
+    })
+    if status.readiness_issues:
+        st.warning("Simulation environment is not ready.")
+        st.subheader("Remaining issues")
+        for issue in status.readiness_issues:
+            st.write(f"- {issue}")
+    if not status.ready_for_run:
+        st.info(
+            "EnergyPlus is installed, but the simulation environment is not ready. "
+            "Resolve the listed IDF, EPW, or workspace issues."
+            if status.installed else
+            "EnergyPlus installation was not detected. Configure ENERGYPLUS_* paths."
+        )
+    elif st.session_state.get("phase4_result") is None:
+        st.info(
+            "EnergyPlus installation, IDF model, EPW weather file, and output "
+            "workspace are ready. Run the first real EnergyPlus simulation to "
+            "complete Phase 4 validation."
+        )
+    if st.button(
+        "Run EnergyPlus Simulation",
+        type="primary",
+        disabled=not status.ready_for_run,
+        key="phase4_run",
+    ):
+        with st.spinner("Running EnergyPlus batch simulation..."):
+            result = backend.run_simulation()
+            st.session_state["phase4_result"] = result
+            st.session_state["phase4_telemetry"] = backend.history_dataframe()
+            st.session_state["phase4_building_telemetry"] = (
+                backend.building_history_dataframe()
+            )
+            st.session_state["phase4_summary"] = backend.get_telemetry_summary()
+            st.session_state["phase4_errors"] = backend.get_runtime_errors()
+    result = st.session_state.get("phase4_result")
+    if result is None:
+        return
+    if result.success:
+        st.success("Phase 4 EnergyPlus execution validation completed successfully.")
+    else:
+        st.error(f"EnergyPlus validation failed: {result.failure_reason}")
+    run_cards = st.columns(4)
+    run_cards[0].metric("Run ID", result.run_id)
+    run_cards[1].metric("Exit code", result.exit_code)
+    run_cards[2].metric("Duration", f"{result.duration_seconds:.2f} s")
+    run_cards[3].metric("Success", "Yes" if result.success else "No")
+    st.write({
+        "Warnings": result.warning_count,
+        "Severe errors": result.severe_count,
+        "Fatal errors": result.fatal_count,
+        "Output directory": str(result.output_dir),
+        "Backend": result.backend,
+        "Classification": result.classification,
+        "Official EnergyPlus-derived result": result.official_result,
+        "AI controlled": result.ai_controlled,
+        "Closed loop": result.closed_loop,
+        "Optimized": result.optimized,
+        "Savings result": result.savings_result,
+    })
+    telemetry = st.session_state.get("phase4_telemetry", pd.DataFrame())
+    building_telemetry = st.session_state.get(
+        "phase4_building_telemetry", pd.DataFrame()
+    )
+    summary = st.session_state.get("phase4_summary")
+    if summary is not None:
+        st.subheader("Initial EnergyPlus telemetry")
+        telemetry_cards = st.columns(5)
+        telemetry_cards[0].metric(
+            "Facility electricity",
+            (
+                f"{summary.total_electricity_kwh:.2f} kWh"
+                if summary.total_electricity_kwh is not None else "Unavailable"
+            ),
+        )
+        telemetry_cards[1].metric(
+            "Peak demand",
+            (
+                f"{summary.peak_demand_kw:.2f} kW"
+                if summary.peak_demand_kw is not None else "Unavailable"
+            ),
+        )
+        telemetry_cards[2].metric("Zones", len(summary.zones))
+        telemetry_cards[3].metric("Zone rows", summary.row_count)
+        telemetry_cards[4].metric("Warnings", result.warning_count)
+        st.write({
+            "Zone temperature available": summary.zone_temperature_available,
+            "Outdoor temperature available": summary.outdoor_temperature_available,
+            "Electricity available": summary.electricity_available,
+            "Demand available": summary.demand_available,
+            "Electricity source": summary.electricity_source_column,
+            "Demand source": summary.demand_source_column,
+            "Demand method": summary.demand_calculation_method,
+            "Reporting frequency": summary.reporting_frequency,
+        })
+    if not telemetry.empty:
+        st.dataframe(telemetry.head(500), hide_index=True, use_container_width=True)
+        zone_chart = px.line(
+            telemetry,
+            x="timestamp",
+            y="indoor_temperature_c",
+            color="zone_name",
+            title="EnergyPlus zone mean air temperatures",
+        )
+        st.plotly_chart(zone_chart, use_container_width=True)
+    if not building_telemetry.empty:
+        for value, title, label in (
+            (
+                "outdoor_temperature_c",
+                "EnergyPlus outdoor dry-bulb temperature",
+                "Temperature (°C)",
+            ),
+            (
+                "interval_electricity_kwh",
+                "Facility electricity per interval",
+                "Electricity (kWh)",
+            ),
+            (
+                "facility_demand_kw",
+                "Facility electricity demand",
+                "Demand (kW)",
+            ),
+        ):
+            if value in building_telemetry and building_telemetry[value].notna().any():
+                chart = px.line(
+                    building_telemetry,
+                    x="timestamp",
+                    y=value,
+                    title=title,
+                    labels={value: label, "timestamp": "Time"},
+                )
+                st.plotly_chart(chart, use_container_width=True)
+    errors = st.session_state.get("phase4_errors", [])
+    warnings = [item for item in errors if item.severity == "warning"]
+    if warnings:
+        st.subheader("EnergyPlus warning summary")
+        st.dataframe(
+            pd.DataFrame([
+                {
+                    "classification": classify_energyplus_warning(item.message),
+                    "message": item.message,
+                }
+                for item in warnings
+            ]),
+            hide_index=True,
+            use_container_width=True,
+        )
+
+
 def main() -> None:
     """Render the EcoPilot AI dashboard."""
     if st is None:
@@ -385,14 +586,17 @@ def main() -> None:
             "Phase 1 configuration",
             "Phase 2 lightweight simulator",
             "Phase 3 development baseline",
+            "Phase 4 EnergyPlus integration",
         )
     )
     if page == "Phase 1 configuration":
         render_phase1()
     elif page == "Phase 2 lightweight simulator":
         render_phase2()
-    else:
+    elif page == "Phase 3 development baseline":
         render_phase3()
+    else:
+        render_phase4()
     st.header("Phase Status")
     st.dataframe(_phase_table(), hide_index=True, use_container_width=True)
 

@@ -32,7 +32,8 @@ EnergyPlus next interval
 Dashboard, logs and audit history
 ```
 
-This is a target design. The EnergyPlus, MCP, LLM, safety-injection, and closed-loop
+This is a target design beyond Phase 4. EnergyPlus batch execution and initial
+telemetry are implemented; MCP, LLM, safety injection, actuators, and closed-loop
 segments are not implemented.
 
 ## 3. Current development architecture
@@ -54,11 +55,27 @@ The lightweight backend is a development harness and fallback for interface, dat
 controller, metric, and UI tests. Composition preserves the existing equations,
 random seed, heat-wave behavior, default actions, and history.
 
-## 6. Future EnergyPlus backend
+## 6. Phase 4 EnergyPlus backend
 
-The Phase 4 backend will validate executable, IDF, and EPW inputs; manage runs and
-callbacks; map variables and meters; expose actuators; capture failures; and manage
-output/model paths. The current placeholder is always unavailable.
+The backend validates executable, IDD, IDF, EPW, version, and output readiness;
+runs EnergyPlus as an isolated subprocess; preserves raw outputs and metadata;
+classifies diagnostics; and parses zone and building telemetry. It never silently
+substitutes the lightweight backend.
+
+Zone telemetry contains one row per zone and timestamp. Building telemetry contains
+one row per timestamp for `Electricity:Facility [J](Hourly)` and
+`Whole Building:Facility Total Electricity Demand Rate [W](Hourly)`. This separation
+prevents facility totals from being multiplied by zone count. Electricity uses
+J / 3,600,000 and direct demand uses W / 1,000.
+
+The accepted `weather_location_mismatch` warning records that the example IDF
+Location is Chicago while the EPW is Bengaluru; EnergyPlus uses the EPW location.
+The complete diagnostic is retained in metadata.
+
+Phase 4 provides verified EnergyPlus execution, diagnostics, zone and outdoor
+temperature telemetry, facility electricity, and facility peak-demand telemetry.
+It does not implement an official fixed-schedule EnergyPlus baseline, actuator
+injection, MCP, LLM reasoning, optimization, or closed-loop control.
 
 ## 7. Telemetry schema
 

@@ -1,6 +1,8 @@
 """Validated, immutable settings for EcoPilot AI."""
 
 from dataclasses import dataclass, field
+import os
+from pathlib import Path
 from types import MappingProxyType
 from typing import Mapping
 
@@ -251,21 +253,58 @@ class SimulatorPhysicsSettings:
 
 @dataclass(frozen=True)
 class EnergyPlusSettings:
-    """Phase 4 connection settings for the required final simulation engine.
+    """Phase 4 installation and future-run readiness settings.
 
-    Paths are intentionally not checked yet so Phases 1-3 remain usable without
-    an EnergyPlus installation or building/weather model files.
+    File existence is deliberately checked by discovery rather than at import time.
+    Environment overrides make one immutable settings object sufficient for CLI,
+    backend, and dashboard use.
     """
 
     enabled: bool = False
-    executable_path: str = ""
-    idf_path: str = "energyplus/models/baseline.idf"
-    epw_path: str = ""
-    output_directory: str = "energyplus/output"
-    logs_directory: str = "energyplus/logs"
-    modified_models_directory: str = "energyplus/models/modified"
+    installation_dir: Path = field(default_factory=lambda: Path(
+        os.environ.get("ENERGYPLUS_HOME", r"C:\EnergyPlusV26-1-0")
+    ))
+    executable_path: Path = field(default_factory=lambda: Path(
+        os.environ.get(
+            "ENERGYPLUS_EXECUTABLE",
+            str(Path(os.environ.get(
+                "ENERGYPLUS_HOME", r"C:\EnergyPlusV26-1-0"
+            )) / "energyplus.exe"),
+        )
+    ))
+    idd_path: Path = field(default_factory=lambda: Path(
+        os.environ.get(
+            "ENERGYPLUS_IDD",
+            str(Path(os.environ.get(
+                "ENERGYPLUS_HOME", r"C:\EnergyPlusV26-1-0"
+            )) / "Energy+.idd"),
+        )
+    ))
+    source_model_path: Path = Path("energyplus/models/base/phase4_base_model.idf")
+    base_model_path: Path = field(default_factory=lambda: Path(
+        os.environ.get(
+            "ENERGYPLUS_MODEL",
+            "energyplus/models/modified/phase4_telemetry_model.idf",
+        )
+    ))
+    weather_file_path: Path = field(default_factory=lambda: Path(
+        os.environ.get("ENERGYPLUS_WEATHER", "energyplus/weather/phase4_weather.epw")
+    ))
+    output_root: Path = field(default_factory=lambda: Path(
+        os.environ.get("ENERGYPLUS_OUTPUT_ROOT", "energyplus/output/official")
+    ))
+    logs_root: Path = field(default_factory=lambda: Path(
+        os.environ.get("ENERGYPLUS_LOG_ROOT", "energyplus/logs")
+    ))
+    metadata_root: Path = Path("energyplus/metadata")
+    modified_models_directory: Path = Path("energyplus/models/modified")
+    expected_version: str | None = "26.1"
+    process_timeout_seconds: int = 300
+    preserve_raw_outputs: bool = True
+    expand_objects: bool = True
+    readvars: bool = True
+    annual_run: bool = True
     control_interval_minutes: int = 15
-    timeout_seconds: int = 180
     primary_backend: str = "energyplus"
     fallback_backend: str = "lightweight"
 
@@ -273,12 +312,34 @@ class EnergyPlusSettings:
         valid_backends = {"energyplus", "lightweight"}
         if self.control_interval_minutes <= 0:
             raise ValueError("EnergyPlus control interval must be positive.")
-        if self.timeout_seconds <= 0:
+        if self.process_timeout_seconds <= 0:
             raise ValueError("EnergyPlus timeout must be positive.")
         if self.primary_backend not in valid_backends:
             raise ValueError("Primary backend must be energyplus or lightweight.")
         if self.fallback_backend not in valid_backends:
             raise ValueError("Fallback backend must be energyplus or lightweight.")
+
+    @property
+    def idf_path(self) -> Path:
+        """Backward-compatible alias for the configured model."""
+        return self.base_model_path
+
+    @property
+    def epw_path(self) -> Path:
+        """Backward-compatible alias for the configured weather file."""
+        return self.weather_file_path
+
+    @property
+    def output_directory(self) -> Path:
+        return self.output_root
+
+    @property
+    def logs_directory(self) -> Path:
+        return self.logs_root
+
+    @property
+    def timeout_seconds(self) -> int:
+        return self.process_timeout_seconds
 
 
 @dataclass(frozen=True)

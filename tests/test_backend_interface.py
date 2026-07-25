@@ -14,10 +14,10 @@ def test_backend_status_is_explicit_and_honest() -> None:
         "available": True,
         "label": "Lightweight Development Simulator",
     }
-    assert status["energyplus"] == {
-        "available": False,
-        "label": "EnergyPlus",
-    }
+    assert isinstance(status["energyplus"]["available"], bool)
+    assert status["energyplus"]["label"] == "EnergyPlus Official Backend"
+    if not status["energyplus"]["available"]:
+        assert status["energyplus"]["reason"]
 
 
 def test_registry_creates_only_the_requested_backend() -> None:

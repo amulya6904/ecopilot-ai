@@ -3,6 +3,12 @@ venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.pytest_cache_local/
+.pytest_tmp/
+.pytest_tmp*/
+test-results/
+coverage.xml
+htmlcov/
 .streamlit/
 .env
 *.db
@@ -18,7 +24,9 @@ data/*.csv
 !data/.gitkeep
 energyplus/output/*
 energyplus/logs/*
+energyplus/metadata/*.json
 energyplus/models/modified/*
+!energyplus/models/modified/phase4_telemetry_model.idf
 results/development/*.csv
 results/official/*.csv
 !energyplus/output/.gitkeep
