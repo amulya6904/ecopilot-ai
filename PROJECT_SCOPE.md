@@ -32,8 +32,9 @@ The final system requires:
 - base and modified IDFs, source code, dashboard, architecture documentation,
   presentation, and a demonstration video of at most three minutes.
 
-No EnergyPlus, MCP, LLM, tool-calling, or closed-loop functionality is implemented
-in Phases 1–3.
+EnergyPlus batch execution and the official fixed-schedule baseline are implemented
+in Phases 4–5. MCP, LLM, tool-calling, actuator injection, autonomous control,
+closed-loop execution, and savings comparison are not implemented.
 
 ## Building and development scope
 
@@ -117,5 +118,17 @@ LLM cannot bypass validation or write actuators directly.
 11. Final dashboard
 12. Documentation and submission
 
-Phases 1–3 are complete under their development classification. Phase 4 —
-EnergyPlus Integration — is next.
+Phases 1–5 are complete under their stated classifications. Phase 5 establishes the
+official fixed-schedule EnergyPlus baseline using the existing verified EnergyPlus
+example model. Original EnergyPlus zone identifiers are preserved, while display
+aliases are used for presentation. This phase does not implement MCP, an open-source
+LLM, actuator injection, autonomous control, optimization, or savings comparison.
+
+The retained model contains `SPACE1-1` through `SPACE5-1` and `PLENUM-1`.
+Configuration maps those identifiers to Open Office, Conference Room, Computer Lab,
+Support Zone, Auxiliary Zone, and HVAC Plenum. The plenum remains in raw telemetry
+but is excluded from occupied comfort metrics. Existing People, Lights,
+ElectricEquipment, ventilation, geometry, sizing, and HVAC availability schedules
+are frozen for future comparison.
+
+**Next: Phase 6 — bounded MCP tools.**

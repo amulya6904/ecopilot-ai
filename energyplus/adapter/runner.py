@@ -16,6 +16,31 @@ from energyplus.adapter.error_parser import (
 )
 
 
+def _readvars_executable(
+    installation_dir: Path | None,
+    energyplus_executable: Path,
+) -> Path | None:
+    """Locate the ReadVarsESO companion shipped with EnergyPlus."""
+    roots = [
+        root
+        for root in (installation_dir, energyplus_executable.parent)
+        if root is not None
+    ]
+    candidates = [
+        root / directory / name
+        for root in roots
+        for directory in ("PostProcess", "")
+        for name in ("ReadVarsESO.exe", "ReadVarsESO")
+    ]
+    return next((candidate.resolve() for candidate in candidates if candidate.is_file()), None)
+
+
+def _decode_timeout_output(value: str | bytes | None) -> str:
+    if isinstance(value, bytes):
+        return value.decode(errors="replace")
+    return value or ""
+
+
 @dataclass(frozen=True)
 class EnergyPlusRunResult:
     run_id: str
@@ -84,12 +109,13 @@ def run_energyplus(
     ]
     if settings.expand_objects:
         command.append("--expandobjects")
-    if settings.readvars:
-        command.append("--readvars")
     command.append(str(Path(settings.base_model_path).resolve()))
     started = time.monotonic()
     exit_code: int | None = None
-    timed_out = False
+    energyplus_timed_out = False
+    readvars_timed_out = False
+    readvars_exit_code: int | None = None
+    readvars_failure: str | None = None
     stdout = ""
     stderr = ""
     try:
@@ -105,27 +131,84 @@ def run_energyplus(
         stdout = process.stdout
         stderr = process.stderr
     except subprocess.TimeoutExpired as error:
-        timed_out = True
-        stdout = error.stdout or ""
-        stderr = error.stderr or ""
-        if isinstance(stdout, bytes):
-            stdout = stdout.decode(errors="replace")
-        if isinstance(stderr, bytes):
-            stderr = stderr.decode(errors="replace")
-    duration = time.monotonic() - started
-    stdout_path.write_text(stdout, encoding="utf-8")
-    stderr_path.write_text(stderr, encoding="utf-8")
+        energyplus_timed_out = True
+        stdout = _decode_timeout_output(error.stdout)
+        stderr = _decode_timeout_output(error.stderr)
     error_path = output_dir / "eplusout.err"
     eso_path = output_dir / "eplusout.eso"
     csv_path = output_dir / "eplusout.csv"
     sql_path = output_dir / "eplusout.sql"
+    readvars_path: Path | None = None
+    readvars_command: list[str] | None = None
+    if (
+        settings.readvars
+        and not energyplus_timed_out
+        and exit_code == 0
+        and eso_path.is_file()
+    ):
+        readvars_path = _readvars_executable(
+            status.installation_dir,
+            status.executable_path,
+        )
+        if readvars_path is None:
+            readvars_failure = "ReadVarsESO executable was not found."
+        else:
+            rvi_path = output_dir / "eplusout.rvi"
+            rvi_path.write_text(
+                f"{eso_path.resolve()}\n{csv_path.resolve()}\n",
+                encoding="utf-8",
+            )
+            readvars_command = [str(readvars_path), str(rvi_path), "unlimited"]
+            remaining_timeout = max(
+                1.0,
+                settings.process_timeout_seconds - (time.monotonic() - started),
+            )
+            try:
+                readvars_process = subprocess.run(
+                    readvars_command,
+                    cwd=output_dir,
+                    capture_output=True,
+                    text=True,
+                    timeout=remaining_timeout,
+                    check=False,
+                    shell=False,
+                )
+                readvars_exit_code = readvars_process.returncode
+                stdout += (
+                    "\n\n--- ReadVarsESO ---\n" + readvars_process.stdout
+                )
+                stderr += (
+                    "\n\n--- ReadVarsESO ---\n" + readvars_process.stderr
+                )
+                if readvars_exit_code != 0:
+                    readvars_failure = (
+                        f"ReadVarsESO exited with code {readvars_exit_code}."
+                    )
+            except subprocess.TimeoutExpired as error:
+                readvars_timed_out = True
+                stdout += (
+                    "\n\n--- ReadVarsESO ---\n"
+                    + _decode_timeout_output(error.stdout)
+                )
+                stderr += (
+                    "\n\n--- ReadVarsESO ---\n"
+                    + _decode_timeout_output(error.stderr)
+                )
+                readvars_failure = "ReadVarsESO timed out."
+            except (FileNotFoundError, OSError) as error:
+                readvars_failure = f"ReadVarsESO failed to start: {error}"
+    duration = time.monotonic() - started
+    stdout_path.write_text(stdout, encoding="utf-8")
+    stderr_path.write_text(stderr, encoding="utf-8")
     errors = parse_energyplus_error_file(error_path)
     telemetry_exists = csv_path.is_file() or sql_path.is_file()
     failures: list[str] = []
-    if timed_out:
+    if energyplus_timed_out:
         failures.append("EnergyPlus timed out.")
     elif exit_code != 0:
         failures.append(f"EnergyPlus exited with code {exit_code}.")
+    if readvars_failure:
+        failures.append(readvars_failure)
     if not error_path.is_file():
         failures.append("eplusout.err is missing.")
     if errors.severe_count:
@@ -144,7 +227,7 @@ def run_energyplus(
         run_id=identifier,
         success=success,
         exit_code=exit_code,
-        timed_out=timed_out,
+        timed_out=energyplus_timed_out or readvars_timed_out,
         duration_seconds=duration,
         output_dir=output_dir,
         error_file_path=error_path if error_path.is_file() else None,
@@ -170,6 +253,9 @@ def run_energyplus(
             "executable_path": str(status.executable_path),
             "model_path": str(Path(settings.base_model_path).resolve()),
             "weather_path": str(Path(settings.weather_file_path).resolve()),
+            "readvars_executable": str(readvars_path) if readvars_path else None,
+            "readvars_command": readvars_command,
+            "readvars_exit_code": readvars_exit_code,
             "warnings": [
                 {
                     "message": record.message,

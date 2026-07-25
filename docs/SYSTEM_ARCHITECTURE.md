@@ -32,8 +32,9 @@ EnergyPlus next interval
 Dashboard, logs and audit history
 ```
 
-This is a target design beyond Phase 4. EnergyPlus batch execution and initial
-telemetry are implemented; MCP, LLM, safety injection, actuators, and closed-loop
+This is a target design beyond Phase 5. EnergyPlus batch execution, normalized
+telemetry, and the official fixed-schedule baseline are implemented; MCP, LLM,
+safety injection, actuators, optimization, savings comparison, and closed-loop
 segments are not implemented.
 
 ## 3. Current development architecture
@@ -72,12 +73,42 @@ The accepted `weather_location_mismatch` warning records that the example IDF
 Location is Chicago while the EPW is Bengaluru; EnergyPlus uses the EPW location.
 The complete diagnostic is retained in metadata.
 
-Phase 4 provides verified EnergyPlus execution, diagnostics, zone and outdoor
-temperature telemetry, facility electricity, and facility peak-demand telemetry.
-It does not implement an official fixed-schedule EnergyPlus baseline, actuator
-injection, MCP, LLM reasoning, optimization, or closed-loop control.
+## 7. Phase 5 official baseline pipeline
 
-## 7. Telemetry schema
+```text
+Verified Phase 4 IDF + frozen EPW
+        ↓
+Object-level schedule inspection
+        ↓
+Derived fixed-thermostat IDF
+        ↓
+Phase 4 subprocess runner
+        ↓
+Normalized zone + facility telemetry
+        ↓
+Energy, demand, temperature, PMV-availability and adherence metrics
+        ↓
+Official artifacts + frozen manifest + reproducibility comparison
+```
+
+Option A preserves the verified example geometry and exact EnergyPlus zone names.
+The central mapping supplies display aliases for the UI. `PLENUM-1` remains in raw
+telemetry and is excluded from occupied comfort and thermostat adherence. The five
+`SPACE*-1` zones use shared Phase 5 cooling and heating schedules. Existing
+occupancy and internal-load schedules are preserved.
+
+The normalizer separates one facility record per timestamp from one record per
+timestamp and EnergyPlus zone. Yearless hourly EnergyPlus timestamps are interpreted
+as interval ends with reference year 2000; `24:00` rolls to the next calendar day.
+Unavailable PMV/PPD stays null and is documented.
+
+The manifest freezes EnergyPlus version, executable, source/derived/weather hashes,
+run period, schedules, zone mapping, requested and actual outputs, and diagnostics.
+The reproducibility checker compares exact inputs, telemetry shapes, warnings,
+energy, peak demand, thermostat adherence, temperature compliance, and PMV
+compliance when available.
+
+## 8. Telemetry schema
 
 `BuildingState` carries timestamps, source, zone identity, indoor/outdoor
 temperature, occupancy, humidity, optional CO2, optional PMV, comfort status,
@@ -85,87 +116,94 @@ setpoints, fan/ventilation controls, power, interval/cumulative energy, optional
 facility peak demand, price, and carbon intensity. Unavailable telemetry is `None`,
 not zero.
 
-## 8. Runtime-error schema
+## 9. Runtime-error schema
 
 `RuntimeErrorRecord` contains timestamp, source, severity, code, message, a bounded
 raw excerpt, and recoverability. It is suitable for later MCP error tools without
 putting an entire log in a model prompt.
 
-## 9. Control-action schema
+## 10. Control-action schema
 
 `ControlAction` identifies the zone, cooling/heating setpoints, optional fan and
 ventilation values, action source, reason, confidence, request time, and validation
 result. Current actions are `baseline_schedule` or `fixed_test_action`, never AI.
 
-## 10. MCP tool architecture
+## 11. MCP tool architecture
 
 Future bounded tools will read summarized state, constraints, demand, carbon,
 recent actions, and relevant errors; submit structured proposals; and query audit
 records. Tools will enforce input schemas and least authority. No MCP server tools
 exist today.
 
-## 11. LLM prompting approach
+## 12. LLM prompting approach
 
 The future open-source model will receive a compact system policy, current targets
 and constraints, summarized recent telemetry, relevant errors, and available tool
 schemas. Prompts will distinguish observations from unavailable fields and require
 explicit reasons.
 
-## 12. Structured response format
+## 13. Structured response format
 
 The agent response will be machine-validated JSON matching control proposal
 schemas, including per-zone values, reason, confidence, horizon, and constraint
 acknowledgements. Natural-language prose will not be accepted as an actuator input.
 
-## 13. Safety-validation layer
+## 14. Safety-validation layer
 
 Deterministic checks will enforce absolute equipment bounds, rate limits, PMV or
 temperature fallback constraints, CO2/ventilation constraints, demand policy,
 conflict handling, stale-state rejection, and operator overrides. Rejected actions
 fall back to a known schedule and are audited.
 
-## 14. Forward injection
+## 15. Forward injection
 
 After validation, Phase 8 will map control fields to EnergyPlus actuators or
-supervisory schedules and apply them before the next interval. No forward injection
-or IDF modification is implemented now.
+supervisory schedules and apply them before the next interval. Phase 5 performs
+only deterministic offline IDF derivation for the conventional baseline; no runtime
+forward injection is implemented.
 
-## 15. Latency-management strategy
+## 16. Latency-management strategy
 
 Agent calls will have a timeout, bounded retries, and a deterministic fallback
 schedule. Telemetry will be summarized to the useful horizon rather than sending
 every record. Full raw logs will not be included in every prompt. A late response
 will be rejected for its expired interval.
 
-## 16. Long-log management
+## 17. Long-log management
 
 The runtime layer will extract errors, summarize repeated warnings, retain raw logs
 on disk, send only relevant excerpts to the LLM, and preserve references to the
 full log files for operators and audits.
 
-## 17. Baseline-versus-agent comparison
+## 18. Baseline-versus-agent comparison
 
 Official runs must use identical EnergyPlus IDF, EPW, timestep, warm-up, seeds where
 applicable, output variables, and evaluation windows. Reports will compare total
 kWh, percentage reduction, peak demand, cost/carbon, PMV compliance, IAQ, and
 violations. Development outputs remain separate.
 
-## 18. Failure recovery
+## 19. Failure recovery
 
 The coordinator will detect runtime failure, timeout, invalid telemetry, malformed
 agent output, validation rejection, and actuator failure. It will record the error,
 apply a deterministic safe schedule when possible, stop on unrecoverable
 EnergyPlus errors, and surface status without fabricating telemetry.
 
-## 19. IDF versioning
+## 20. IDF versioning
 
 The source baseline will live under `energyplus/models/`. Generated or modified
 runtime IDFs will live under `energyplus/models/modified/` with run IDs, timestamps,
 input hashes, and provenance. Source IDFs are not globally ignored.
 
-## 20. Audit logging
+## 21. Audit logging
 
 Each interval will link source telemetry, summarized prompt context, tool calls,
 model response, proposed action, validation outcome, applied override, runtime
 errors, and resulting telemetry. Logs must make fallback and human intervention
 visible. This audit pipeline is planned, not implemented.
+
+Phase 5 establishes the official fixed-schedule EnergyPlus baseline using the
+existing verified EnergyPlus example model. Original EnergyPlus zone identifiers
+are preserved, while display aliases are used for presentation. This phase does not
+implement MCP, an open-source LLM, actuator injection, autonomous control,
+optimization, or savings comparison.

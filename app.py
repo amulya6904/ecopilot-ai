@@ -1,5 +1,7 @@
-"""Streamlit dashboard for EcoPilot AI Phases 1 through 4."""
+"""Streamlit dashboard for EcoPilot AI Phases 1 through 5."""
 
+import json
+from pathlib import Path
 import pandas as pd
 import plotly.express as px
 
@@ -17,6 +19,7 @@ from controllers.baseline import BaselineController, run_baseline_day
 from metrics.baseline_metrics import calculate_baseline_summary, calculate_zone_summary
 from energyplus.adapter.error_parser import classify_energyplus_warning
 from simulator.building import BuildingSimulator
+from ui.phase5 import render_phase5
 
 
 def _range_text(minimum: float, maximum: float) -> str:
@@ -33,12 +36,38 @@ def _phase_table() -> pd.DataFrame:
         if phase4_result is not None and phase4_result.success
         else "Environment dependent"
     )
+    phase5_result = (
+        st.session_state.get("phase5_result")
+        if st is not None else None
+    )
+    persisted_phase5 = Path(
+        "results/official/phase5_energyplus_baseline_summary.json"
+    )
+    phase5_complete = bool(
+        phase5_result is not None and phase5_result.success
+    )
+    if not phase5_complete and persisted_phase5.is_file():
+        try:
+            stored = json.loads(persisted_phase5.read_text(encoding="utf-8"))
+            phase5_complete = bool(
+                stored.get("success")
+                and stored.get("classification")
+                == "official_energyplus_baseline"
+                and stored.get("official_result") is True
+                and stored.get("baseline_result") is True
+            )
+        except (OSError, json.JSONDecodeError):
+            phase5_complete = False
     phases = [
         ("Phase 1", "Configuration and architecture foundation", "Complete"),
         ("Phase 2", "Lightweight development simulator", "Complete"),
         ("Phase 3", "Lightweight fixed baseline benchmark", "Complete"),
         ("Phase 4", "EnergyPlus integration", phase4_status),
-        ("Phase 5", "EnergyPlus baseline", "Not started"),
+        (
+            "Phase 5",
+            "Official fixed-schedule EnergyPlus baseline",
+            "Complete" if phase5_complete else "Not run",
+        ),
         ("Phase 6", "MCP tools", "Not started"),
         ("Phase 7", "Open-source LLM agent", "Not started"),
         ("Phase 8", "Closed-loop EnergyPlus execution", "Not started"),
@@ -54,9 +83,16 @@ def _render_project_status() -> None:
     """Show the required target and the honest current implementation state."""
 
     statuses = get_backend_status()
+    official_baseline = Path(
+        "results/official/phase5_energyplus_baseline_summary.json"
+    ).is_file()
     st.info(
         "**Project status:** EnergyPlus is the primary required final engine. "
-        "Current results are development-only."
+        + (
+            "The Phase 5 fixed-schedule baseline has official EnergyPlus artifacts."
+            if official_baseline
+            else "Lightweight results remain development-only until Phase 5 is run."
+        )
     )
     columns = st.columns(3)
     columns[0].write("**Primary required engine**  \nEnergyPlus")
@@ -83,7 +119,10 @@ def _render_project_status() -> None:
             "Open-source LLM": "Not started",
             "MCP tools": "Not started",
             "Closed-loop EnergyPlus control": "Not started",
-            "Current results": "Development-only",
+            "Current results": (
+                "Official EnergyPlus baseline available"
+                if official_baseline else "Development-only"
+            ),
         })
 
 
@@ -577,8 +616,8 @@ def main() -> None:
     st.write(
         "EcoPilot AI is being developed as a safe, predictive HVAC platform. "
         "Phases 1–3 provide validated configuration, a repeatable lightweight "
-        "development simulator, and a development benchmark. EnergyPlus is required "
-        "for the final baseline and closed-loop evaluation."
+        "development simulator, and a development benchmark. Phases 4–5 provide "
+        "verified EnergyPlus execution and the official fixed-schedule baseline."
     )
     _render_project_status()
     page = st.sidebar.radio(
@@ -587,6 +626,7 @@ def main() -> None:
             "Phase 2 lightweight simulator",
             "Phase 3 development baseline",
             "Phase 4 EnergyPlus integration",
+            "Phase 5 official EnergyPlus baseline",
         )
     )
     if page == "Phase 1 configuration":
@@ -595,8 +635,10 @@ def main() -> None:
         render_phase2()
     elif page == "Phase 3 development baseline":
         render_phase3()
-    else:
+    elif page == "Phase 4 EnergyPlus integration":
         render_phase4()
+    else:
+        render_phase5(st)
     st.header("Phase Status")
     st.dataframe(_phase_table(), hide_index=True, use_container_width=True)
 
