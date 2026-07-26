@@ -371,3 +371,17 @@ references evidence instead of duplicating large raw telemetry.
   same typed and deterministic trust boundary.
 - Commission against a read-only building-management-system shadow deployment
   before considering any controlled pilot.
+
+  ## Submission Deliverables
+
+The complete Honeywell submission package, including all four required deliverables and the PoC demonstration video, is available here:
+
+**[Download EcoPilot AI Deliverables 1–4](./EcoPilot_AI_Deliverables_1_to_4.zip)**
+
+The ZIP contains:
+
+1. Fully functional source code and setup instructions
+2. EnergyPlus building model files (`.idf`)
+3. Quantitative results, comparison exports, and reproducibility evidence
+4. System architecture documentation
+5. EcoPilot AI PoC demonstration video
