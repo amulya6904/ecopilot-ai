@@ -12,6 +12,31 @@ EnergyPlus model. It is not a real-building deployment, a production optimizer,
 or a safety-certified controller. Genuine PMV/PPD is unavailable in the
 retained People objects; occupied-temperature compliance is the declared proxy.
 
+## Required architecture coverage
+
+| Required topic | Primary section |
+|---|---|
+| System overview | Purpose and verified scope; End-to-end flow |
+| Closed-loop architecture | End-to-end flow; Asynchronous and non-blocking control design |
+| EnergyPlus integration | EnergyPlus-first design |
+| Building-state and telemetry layer | EnergyPlus-first design; MCP communication layer |
+| MCP tool-calling architecture | MCP communication layer |
+| MCP tool permissions and schemas | MCP tool permissions and schemas |
+| `qwen3:4b` / Ollama agent | Local LLM advisory layer |
+| Prompt-engineering strategy | Prompt engineering and bounded-context strategy |
+| Structured proposal format | Typed advisory proposal |
+| Prompt-latency management | Latency and timeout management |
+| Long simulation-log handling | Long simulation-log handling and audit logging |
+| Deterministic validation | Deterministic validation |
+| Safety supervisor | Safety supervisor |
+| Runtime actuator injection | Actuator discovery and runtime callback design |
+| Rollback and fallback | Rollback and fallback |
+| Audit logging | Log and error handling; Long simulation-log handling and audit logging |
+| Quantitative-comparison pipeline | Comparison compatibility gate |
+| Reproducibility | Reproducibility |
+| Official versus development classification | Evidence and artifact classification |
+| Technical scope and assumptions | Technical scope and assumptions |
+
 ## End-to-end flow
 
 ```text
@@ -333,3 +358,69 @@ preserved explicit developer workflows.
 Immutable artifact reads are cached by path, modification time, and size.
 Annual telemetry is column-selected and downsampled only for visualization;
 official metrics always come from the full-resolution Phase 10 summary.
+
+## 18. MCP tool permissions and schemas
+
+Every MCP response uses a structured envelope containing `success`,
+`tool_name`, `data` or a public `error`, and metadata for source, backend,
+classification, timing, record count, truncation, and audit ID. Inputs are
+validated, responses are size-bounded, and failures are audited. Read-only
+tools never start EnergyPlus or modify controls. The sole execution-class tool,
+`run_official_baseline`, can only invoke the existing Phase 5 baseline runner;
+it cannot actuate a live control or fall back to the lightweight simulator.
+
+| Tool | Purpose | Input | Output | Permission | Failure mode | Fallback |
+|---|---|---|---|---|---|---|
+| `get_system_status` | Check project, EnergyPlus, baseline, MCP, SDK, and audit readiness | None | Structured readiness flags and paths | Read-only | Missing dependency or artifact is returned as an unsuccessful envelope | Show readiness issue; apply no action |
+| `get_energyplus_readiness` | Check EnergyPlus discovery and configured inputs | None | Installation and input readiness | Read-only | Installation or configured input unavailable | Keep the feature unavailable; do not simulate |
+| `get_phase_status` | Report honest implementation status | None | Phase status records | Read-only | Status source unavailable | Display unknown status |
+| `get_available_outputs` | Describe official baseline output availability | None | Availability flags and normalized columns | Read-only | Baseline output metadata missing | Treat requested evidence as unavailable |
+| `get_official_baseline_summary` | Read the frozen Phase 5 summary | None | Persisted official summary | Read-only | Summary missing or invalid | Stop evidence-dependent advice |
+| `get_baseline_manifest` | Read frozen hashes and configuration | None | Sanitized baseline manifest | Read-only | Manifest missing or invalid | Reject official-baseline classification |
+| `get_latest_energyplus_run` | Read compact latest-run metadata | None | Run ID, status, counts, and duration | Read-only | No official run found | Report that no run is available |
+| `run_official_baseline` | Explicitly execute the existing Phase 5 runner | `verify_reproducibility: bool`, `force_rebuild: bool` | Classified baseline result and counts | Execution; separately gated | Runner, path, timeout, severe, or fatal failure | Return failure; never use the lightweight backend |
+| `list_zones` | List technical zones, aliases, roles, and availability | None | Bounded zone records | Read-only | Zone inventory unavailable | Do not invent a zone |
+| `get_zone_summary` | Read one official zone summary | `zone_name: str` | Resolved technical name, alias, role, and metrics | Read-only | Unknown or ambiguous zone | Request an exact listed zone |
+| `get_zone_telemetry` | Read bounded zone telemetry | `zone_name`, optional `start`, `end`, `aggregation`, `limit` | Filtered records plus truncation metadata | Read-only | Invalid range, aggregation, limit, or missing data | Narrow the range or use a coarser aggregation |
+| `get_facility_summary` | Read facility electricity and demand totals | None | Persisted facility metrics | Read-only | Facility summary missing | Make no facility-level claim |
+| `get_facility_telemetry` | Read bounded facility telemetry | Optional `start`, `end`, `aggregation`, `limit` | Filtered facility records and truncation metadata | Read-only | Invalid bounds or unavailable telemetry | Narrow or aggregate the query |
+| `get_comfort_summary` | Read occupied comfort evidence and PMV availability | None | Proxy/PMV availability and compliance metrics | Read-only | Comfort evidence missing | State that comfort cannot be verified |
+| `get_thermostat_adherence` | Read policy-to-output adherence evidence | None | Policy, mismatch count, and bounded samples | Read-only | Setpoint evidence unavailable | Do not assert adherence |
+| `get_runtime_errors` | Read bounded EnergyPlus diagnostics | Optional `severity`, `classification`, `limit` | Warning/severe/fatal counters and compact records | Read-only | Invalid filter or diagnostics unavailable | Use run-level counters and surface the limitation |
+
+## 19. Prompt engineering and bounded-context strategy
+
+Telemetry grounding means every model-visible measurement is copied from a
+classified MCP result and accompanied by its source and evidence identity.
+Structured output is enforced with a JSON schema and then parsed into a typed
+proposal. The prompt explicitly forbids fabricated measurements, unsupported
+savings claims, and direct actuation. The LLM has advisory authority only;
+deterministic Python validation and the safety supervisor retain final
+authority.
+
+Context is bounded in three layers: telemetry is summarized into small
+decision-relevant records, only limited recent history is retained, and MCP
+results have row, character, and byte limits. The final proposal request uses
+two compact messages, no tools, a small generation budget, and local
+`qwen3:4b` inference. Configured request and overall-agent timeouts terminate
+slow inference with an explicit no-action result. Provider failure, malformed
+output, or timeout selects a declared fallback. No blocking LLM or MCP call is
+made inside an EnergyPlus runtime callback.
+
+## 20. Long simulation-log handling and audit logging
+
+Complete EnergyPlus logs remain with their run output for engineering
+diagnosis; they are not copied into model context or this compact submission.
+The parser extracts each primary warning, severe error, and fatal error,
+preserves a bounded excerpt, classifies warnings, and records separate
+severity counters. Repeated warnings remain traceable as individual source
+records while classification and counters support aggregation without
+repeating full text. User-facing diagnostics use bounded record sets and
+concise excerpts or tail-style summaries rather than entire logs.
+
+MCP calls, advisory runs, proposals, validations, safety decisions, actuator
+writes, post-action observations, fallbacks, rollbacks, and comparison gates
+carry identifiers and timestamps in dedicated audit artifacts. Audit inputs
+are sanitized, outputs report truncation and record counts, and internal
+exceptions become public structured failures. The LLM sees counters and a
+small diagnostic summary only; raw logs remain outside the agent context.

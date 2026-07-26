@@ -1,0 +1,293 @@
+{
+  "manifest_version": 1,
+  "generator_version": "ecopilot-phase5-v1",
+  "run_id": "20260726T072047Z-29380aea",
+  "generation_timestamp": "2026-07-26T07:21:19.680361+00:00",
+  "energyplus_version": "26.1.0",
+  "executable_path": "<ENERGYPLUS_INSTALL>/energyplus.exe",
+  "base_model_path": "energyplus/models/modified/phase4_telemetry_model.idf",
+  "base_model_hash": "5467be2c8504b32512b81320bd8500c91cecd566ec3ab9684006c18fc7229a50",
+  "derived_baseline_model_path": "energyplus/models/baseline/phase5_baseline.idf",
+  "derived_model_hash": "7523c515744efa4310bd40f403ebb270d649a3599ba99aa0e675e31f697b9dad",
+  "weather_path": "energyplus/weather/phase4_weather.epw",
+  "weather_hash": "b24506e034c43d31950862232b97b404e573de4c8bee04204f62d0890bcae478",
+  "reporting_frequency": "Hourly",
+  "simulation_period": "annual weather-file run",
+  "run_period": [
+    "RunPeriod",
+    "Run Period 1",
+    "1",
+    "1",
+    "",
+    "12",
+    "31",
+    "",
+    "Tuesday",
+    "Yes",
+    "Yes",
+    "No",
+    "Yes",
+    "Yes"
+  ],
+  "timestep": [
+    "Timestep",
+    "4"
+  ],
+  "occupancy_schedule_inventory": [
+    {
+      "people_object": "SPACE1-1 People 1",
+      "schedule": "OCCUPY-1",
+      "zones": [
+        "SPACE1-1"
+      ],
+      "design_people": 11.0
+    },
+    {
+      "people_object": "SPACE2-1 People 1",
+      "schedule": "OCCUPY-1",
+      "zones": [
+        "SPACE2-1"
+      ],
+      "design_people": 5.0
+    },
+    {
+      "people_object": "SPACE3-1 People 1",
+      "schedule": "OCCUPY-1",
+      "zones": [
+        "SPACE3-1"
+      ],
+      "design_people": 11.0
+    },
+    {
+      "people_object": "SPACE4-1 People 1",
+      "schedule": "OCCUPY-1",
+      "zones": [
+        "SPACE4-1"
+      ],
+      "design_people": 5.0
+    },
+    {
+      "people_object": "SPACE5-1 People 1",
+      "schedule": "OCCUPY-1",
+      "zones": [
+        "SPACE5-1"
+      ],
+      "design_people": 20.0
+    }
+  ],
+  "internal_load_schedule_inventory": {
+    "people": [
+      {
+        "object": "SPACE1-1 People 1",
+        "schedule": "OCCUPY-1",
+        "zones": [
+          "SPACE1-1"
+        ]
+      },
+      {
+        "object": "SPACE2-1 People 1",
+        "schedule": "OCCUPY-1",
+        "zones": [
+          "SPACE2-1"
+        ]
+      },
+      {
+        "object": "SPACE3-1 People 1",
+        "schedule": "OCCUPY-1",
+        "zones": [
+          "SPACE3-1"
+        ]
+      },
+      {
+        "object": "SPACE4-1 People 1",
+        "schedule": "OCCUPY-1",
+        "zones": [
+          "SPACE4-1"
+        ]
+      },
+      {
+        "object": "SPACE5-1 People 1",
+        "schedule": "OCCUPY-1",
+        "zones": [
+          "SPACE5-1"
+        ]
+      }
+    ],
+    "lights": [
+      {
+        "object": "SPACE1-1 Lights 1",
+        "schedule": "LIGHTS-1",
+        "zones": [
+          "SPACE1-1"
+        ]
+      },
+      {
+        "object": "SPACE2-1 Lights 1",
+        "schedule": "LIGHTS-1",
+        "zones": [
+          "SPACE2-1"
+        ]
+      },
+      {
+        "object": "SPACE3-1 Lights 1",
+        "schedule": "LIGHTS-1",
+        "zones": [
+          "SPACE3-1"
+        ]
+      },
+      {
+        "object": "SPACE4-1 Lights 1",
+        "schedule": "LIGHTS-1",
+        "zones": [
+          "SPACE4-1"
+        ]
+      },
+      {
+        "object": "SPACE5-1 Lights 1",
+        "schedule": "LIGHTS-1",
+        "zones": [
+          "SPACE5-1"
+        ]
+      }
+    ],
+    "electric_equipment": [
+      {
+        "object": "SPACE1-1 ElecEq 1",
+        "schedule": "EQUIP-1",
+        "zones": [
+          "SPACE1-1"
+        ]
+      },
+      {
+        "object": "SPACE2-1 ElecEq 1",
+        "schedule": "EQUIP-1",
+        "zones": [
+          "SPACE2-1"
+        ]
+      },
+      {
+        "object": "SPACE3-1 ElecEq 1",
+        "schedule": "EQUIP-1",
+        "zones": [
+          "SPACE3-1"
+        ]
+      },
+      {
+        "object": "SPACE4-1 ElecEq 1",
+        "schedule": "EQUIP-1",
+        "zones": [
+          "SPACE4-1"
+        ]
+      },
+      {
+        "object": "SPACE5-1 ElecEq 1",
+        "schedule": "EQUIP-1",
+        "zones": [
+          "SPACE5-1"
+        ]
+      }
+    ]
+  },
+  "hvac_availability_schedule_inventory": [
+    "Min OA Sched",
+    "FanAvailSched",
+    "CoolingCoilAvailSched",
+    "CoolingPumpAvailSched",
+    "ReheatCoilAvailSched",
+    "PlantOnSched"
+  ],
+  "thermostat_policy": {
+    "occupied_start_hour": 9,
+    "occupied_end_hour": 18,
+    "cooling": {
+      "unoccupied_c": 27.0,
+      "occupied_c": 22.0
+    },
+    "heating": {
+      "unoccupied_c": 16.0,
+      "occupied_c": 20.0
+    },
+    "comfort_range_c": [
+      22.0,
+      25.0
+    ],
+    "pmv_range": [
+      -0.5,
+      0.5
+    ],
+    "hourly_timestamp_interpretation": "interval end"
+  },
+  "zone_display_mapping": {
+    "SPACE1-1": "Open Office",
+    "SPACE2-1": "Conference Room",
+    "SPACE3-1": "Computer Lab",
+    "SPACE4-1": "Support Zone",
+    "SPACE5-1": "Auxiliary Zone",
+    "PLENUM-1": "HVAC Plenum"
+  },
+  "zone_roles": {
+    "SPACE1-1": "primary_occupied",
+    "SPACE2-1": "primary_occupied",
+    "SPACE3-1": "primary_occupied",
+    "SPACE4-1": "support_occupied",
+    "SPACE5-1": "auxiliary_occupied",
+    "PLENUM-1": "plenum"
+  },
+  "requested_outputs": [
+    "Zone Mean Air Temperature",
+    "Zone Thermostat Cooling Setpoint Temperature",
+    "Zone Thermostat Heating Setpoint Temperature",
+    "Zone People Occupant Count",
+    "Zone Air Relative Humidity",
+    "Zone Thermal Comfort Fanger Model PMV",
+    "Zone Thermal Comfort Fanger Model PPD",
+    "Site Outdoor Air Drybulb Temperature",
+    "Site Outdoor Air Relative Humidity",
+    "Facility Total Electricity Demand Rate",
+    "Electricity:Facility",
+    "Electricity:HVAC",
+    "Cooling:Electricity",
+    "Heating:Electricity",
+    "Fans:Electricity",
+    "Output:SQLite",
+    "Output:VariableDictionary"
+  ],
+  "actual_available_outputs": {
+    "zone_temperature": true,
+    "cooling_setpoint": true,
+    "heating_setpoint": true,
+    "occupancy": true,
+    "zone_relative_humidity": true,
+    "pmv": false,
+    "ppd": false,
+    "outdoor_temperature": true,
+    "facility_electricity": true,
+    "facility_demand": true,
+    "hvac_electricity": true,
+    "cooling_electricity": true,
+    "heating_electricity": true,
+    "fan_electricity": true
+  },
+  "warnings": [
+    {
+      "timestamp": "2026-07-26T07:21:19.003873+00:00",
+      "source": "energyplus",
+      "severity": "warning",
+      "code": "ENERGYPLUS_WARNING",
+      "message": "Weather file location will be used rather than entered (IDF) Location object. ..Location object=CHICAGO_IL_USA TMY2-94846 ..Weather File Location=Bengaluru-Hindustan.AP KA IND SRC-TMYx WMO#=432960 ..due to location differences, Latitude difference=[28.83] degrees, Longitude difference=[165.42] degrees. ..Time Zone difference=[11.5] hour(s), Elevation difference=[367.37] percent, [698.00] meters.",
+      "raw_log_excerpt": "   ** Warning ** Weather file location will be used rather than entered (IDF) Location object.\n   **   ~~~   ** ..Location object=CHICAGO_IL_USA TMY2-94846\n   **   ~~~   ** ..Weather File Location=Bengaluru-Hindustan.AP KA IND SRC-TMYx WMO#=432960\n   **   ~~~   ** ..due to location differences, Latitude difference=[28.83] degrees, Longitude difference=[165.42] degrees.\n   **   ~~~   ** ..Time Zone difference=[11.5] hour(s), Elevation difference=[367.37] percent, [698.00] meters.",
+      "recoverable": true,
+      "classification": "weather_location_mismatch"
+    },
+    {
+      "timestamp": "2026-07-26T07:21:19.003873+00:00",
+      "source": "energyplus",
+      "severity": "warning",
+      "code": "ENERGYPLUS_WARNING",
+      "message": "The following Report Variables were requested but not generated -- check.rdd file Either the IDF did not contain these elements, the variable name is misspelled, or the requested variable is an advanced output which requires Output : Diagnostics, DisplayAdvancedReportVariables;",
+      "raw_log_excerpt": "   ** Warning ** The following Report Variables were requested but not generated -- check.rdd file\n   **   ~~~   ** Either the IDF did not contain these elements, the variable name is misspelled,\n   **   ~~~   ** or the requested variable is an advanced output which requires Output : Diagnostics, DisplayAdvancedReportVariables;",
+      "recoverable": true,
+      "classification": "reporting_issue"
+    }
+  ]
+}

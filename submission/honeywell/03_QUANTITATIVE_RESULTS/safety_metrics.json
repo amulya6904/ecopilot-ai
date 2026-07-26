@@ -1,0 +1,11 @@
+{
+  "intervention_rate": 0.8577981651376146,
+  "unsafe_actions_prevented": 935,
+  "comfort_risk_actions_prevented": 37,
+  "demand_risk_actions_prevented": 0,
+  "stale_data_rejections": 0,
+  "oscillation_detections": 931,
+  "actuator_mismatches": 0,
+  "rollback_success_rate": null,
+  "emergency_recovery_success_rate": null
+}

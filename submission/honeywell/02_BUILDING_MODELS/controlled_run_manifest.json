@@ -1,0 +1,244 @@
+{
+  "manifest_version": 1,
+  "generator_version": "ecopilot-phase10-controlled-v1",
+  "run_id": "20260726T121644Z-phase10-reproducible_policy-3edee0c3",
+  "mode": "reproducible_policy",
+  "backend": "energyplus",
+  "source": "EnergyPlus",
+  "classification": "official_energyplus_safety_supervised_controlled_evaluation",
+  "created_at": "2026-07-26T12:17:48.371558+00:00",
+  "base_model_path": "energyplus/models/modified/phase4_telemetry_model.idf",
+  "base_model_hash": "5467be2c8504b32512b81320bd8500c91cecd566ec3ab9684006c18fc7229a50",
+  "runtime_model_path": "energyplus/models/baseline/phase5_baseline.idf",
+  "runtime_model_hash": "7523c515744efa4310bd40f403ebb270d649a3599ba99aa0e675e31f697b9dad",
+  "derived_model_hash": "7523c515744efa4310bd40f403ebb270d649a3599ba99aa0e675e31f697b9dad",
+  "weather_path": "energyplus/weather/phase4_weather.epw",
+  "weather_hash": "b24506e034c43d31950862232b97b404e573de4c8bee04204f62d0890bcae478",
+  "energyplus_version": "26.1.0",
+  "run_period": [
+    "RunPeriod",
+    "Run Period 1",
+    "1",
+    "1",
+    "",
+    "12",
+    "31",
+    "",
+    "Tuesday",
+    "Yes",
+    "Yes",
+    "No",
+    "Yes",
+    "Yes"
+  ],
+  "reporting_frequency": "Hourly",
+  "interval_count": 8760,
+  "zone_display_mapping": {
+    "SPACE1-1": "Open Office",
+    "SPACE2-1": "Conference Room",
+    "SPACE3-1": "Computer Lab",
+    "SPACE4-1": "Support Zone",
+    "SPACE5-1": "Auxiliary Zone",
+    "PLENUM-1": "HVAC Plenum"
+  },
+  "zone_mapping_hash": "96831a7bc5e718c2f53a8afbae56faee01ff1484cb5df79279ebd124fe627003",
+  "occupancy_schedule_inventory": [
+    {
+      "people_object": "SPACE1-1 People 1",
+      "schedule": "OCCUPY-1",
+      "zones": [
+        "SPACE1-1"
+      ],
+      "design_people": 11.0
+    },
+    {
+      "people_object": "SPACE2-1 People 1",
+      "schedule": "OCCUPY-1",
+      "zones": [
+        "SPACE2-1"
+      ],
+      "design_people": 5.0
+    },
+    {
+      "people_object": "SPACE3-1 People 1",
+      "schedule": "OCCUPY-1",
+      "zones": [
+        "SPACE3-1"
+      ],
+      "design_people": 11.0
+    },
+    {
+      "people_object": "SPACE4-1 People 1",
+      "schedule": "OCCUPY-1",
+      "zones": [
+        "SPACE4-1"
+      ],
+      "design_people": 5.0
+    },
+    {
+      "people_object": "SPACE5-1 People 1",
+      "schedule": "OCCUPY-1",
+      "zones": [
+        "SPACE5-1"
+      ],
+      "design_people": 20.0
+    }
+  ],
+  "occupancy_configuration_hash": "552fd5308a015234f1c0ff60aac8a6ac8e76ceca4fab5e92009597960254680a",
+  "internal_load_schedule_inventory": {
+    "people": [
+      {
+        "object": "SPACE1-1 People 1",
+        "schedule": "OCCUPY-1",
+        "zones": [
+          "SPACE1-1"
+        ]
+      },
+      {
+        "object": "SPACE2-1 People 1",
+        "schedule": "OCCUPY-1",
+        "zones": [
+          "SPACE2-1"
+        ]
+      },
+      {
+        "object": "SPACE3-1 People 1",
+        "schedule": "OCCUPY-1",
+        "zones": [
+          "SPACE3-1"
+        ]
+      },
+      {
+        "object": "SPACE4-1 People 1",
+        "schedule": "OCCUPY-1",
+        "zones": [
+          "SPACE4-1"
+        ]
+      },
+      {
+        "object": "SPACE5-1 People 1",
+        "schedule": "OCCUPY-1",
+        "zones": [
+          "SPACE5-1"
+        ]
+      }
+    ],
+    "lights": [
+      {
+        "object": "SPACE1-1 Lights 1",
+        "schedule": "LIGHTS-1",
+        "zones": [
+          "SPACE1-1"
+        ]
+      },
+      {
+        "object": "SPACE2-1 Lights 1",
+        "schedule": "LIGHTS-1",
+        "zones": [
+          "SPACE2-1"
+        ]
+      },
+      {
+        "object": "SPACE3-1 Lights 1",
+        "schedule": "LIGHTS-1",
+        "zones": [
+          "SPACE3-1"
+        ]
+      },
+      {
+        "object": "SPACE4-1 Lights 1",
+        "schedule": "LIGHTS-1",
+        "zones": [
+          "SPACE4-1"
+        ]
+      },
+      {
+        "object": "SPACE5-1 Lights 1",
+        "schedule": "LIGHTS-1",
+        "zones": [
+          "SPACE5-1"
+        ]
+      }
+    ],
+    "electric_equipment": [
+      {
+        "object": "SPACE1-1 ElecEq 1",
+        "schedule": "EQUIP-1",
+        "zones": [
+          "SPACE1-1"
+        ]
+      },
+      {
+        "object": "SPACE2-1 ElecEq 1",
+        "schedule": "EQUIP-1",
+        "zones": [
+          "SPACE2-1"
+        ]
+      },
+      {
+        "object": "SPACE3-1 ElecEq 1",
+        "schedule": "EQUIP-1",
+        "zones": [
+          "SPACE3-1"
+        ]
+      },
+      {
+        "object": "SPACE4-1 ElecEq 1",
+        "schedule": "EQUIP-1",
+        "zones": [
+          "SPACE4-1"
+        ]
+      },
+      {
+        "object": "SPACE5-1 ElecEq 1",
+        "schedule": "EQUIP-1",
+        "zones": [
+          "SPACE5-1"
+        ]
+      }
+    ]
+  },
+  "internal_load_configuration_hash": "e41c8db1352de181423874fea4713f281e3a155e35fa347ae0c3e12731286827",
+  "control_policy": "phase10-reproducible-policy-v1",
+  "control_policy_configuration": {
+    "controlled_zone": "SPACE1-1",
+    "demand_trigger_kw": 18.0,
+    "demand_critical_kw": 30.0,
+    "setpoint_step_c": 0.5,
+    "occupied_comfort_bounds_c": [
+      22.0,
+      25.0
+    ],
+    "phase9_final_authority": true,
+    "phase8_actuator_path": true
+  },
+  "actual_available_outputs": {
+    "zone_temperature": true,
+    "cooling_setpoint": true,
+    "heating_setpoint": true,
+    "occupancy": true,
+    "zone_relative_humidity": true,
+    "pmv": false,
+    "ppd": false,
+    "outdoor_temperature": true,
+    "facility_electricity": true,
+    "facility_demand": true,
+    "hvac_electricity": true,
+    "cooling_electricity": true,
+    "heating_electricity": true,
+    "fan_electricity": true
+  },
+  "runtime_artifact_directory": "results/closed_loop/phase8/20260726T121644Z-phase10-reproducible_policy-3edee0c3",
+  "safety_artifact_directory": "results/safety/phase9/20260726T121644Z-phase10-reproducible_policy-3edee0c3",
+  "files": {
+    "facility_telemetry": "controlled_facility_telemetry.csv",
+    "zone_telemetry": "controlled_zone_telemetry.csv",
+    "actions": "controlled_action_summary.csv",
+    "safety_summary": "controlled_safety_summary.json",
+    "safety_decisions": "controlled_safety_decisions.json",
+    "safety_rules": "controlled_safety_rules.json",
+    "rollbacks": "controlled_rollback_events.json",
+    "emergencies": "controlled_emergency_events.json",
+    "proposals": "proposals.json"
+  }
+}

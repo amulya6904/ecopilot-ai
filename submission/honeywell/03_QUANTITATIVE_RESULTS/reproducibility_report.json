@@ -1,0 +1,17 @@
+{
+  "reproducible": true,
+  "mode": "reproducible_policy",
+  "first_comparison_id": "20260726T121626Z-phase10-comparison-d3aedda5",
+  "second_comparison_id": "20260726T121750Z-phase10-comparison-956e5393",
+  "model_hashes_match": true,
+  "weather_hashes_match": true,
+  "telemetry_shape_match": true,
+  "energy_within_tolerance": true,
+  "peak_demand_within_tolerance": true,
+  "comfort_within_tolerance": true,
+  "action_counts_match": true,
+  "comparison_status_match": true,
+  "mismatches": [],
+  "limitations": [],
+  "tolerance": 1e-06
+}

@@ -1,0 +1,166 @@
+{
+  "comparison_id": "20260726T121750Z-phase10-comparison-956e5393",
+  "comparison_valid": true,
+  "claim_status": "validated_positive_savings",
+  "eligible_to_claim_savings": true,
+  "baseline_energy_kwh": 58568.21190808615,
+  "controlled_energy_kwh": 58562.58583227383,
+  "energy_reduction_kwh": 5.626075812324416,
+  "energy_reduction_percent": 0.009606022839067856,
+  "baseline_peak_demand_kw": 21.050576908787157,
+  "controlled_peak_demand_kw": 21.050577252463818,
+  "peak_reduction_percent": -1.6326234760824155e-06,
+  "baseline_comfort_percent": 23.225357018460464,
+  "controlled_comfort_percent": 23.39254615116684,
+  "comfort_gate_passed": true,
+  "cost_reduction": 45.00860649859533,
+  "carbon_reduction": 3.983261675130052,
+  "severe_count": 0,
+  "fatal_count": 0,
+  "official_energyplus_comparison": true,
+  "safety_supervisor_enabled": true,
+  "control_injection_verified": true,
+  "telemetry_alignment_passed": true,
+  "reproducible": true,
+  "exact_approved_statement": "Under the documented compatible EnergyPlus experiment, the safety-supervised controlled run reduced facility electricity by 5.626 kWh (0.010%) while meeting the configured occupied comfort gate.",
+  "assumptions": [
+    "Phase 10 project assumption; replace with the applicable utility tariff.",
+    "Phase 10 project assumption; replace with a cited grid factor.",
+    "Occupied comfort uses genuine PMV only when present; otherwise the declared occupied-temperature proxy is used.",
+    "The deterministic policy changes only the verified SPACE1-1 cooling setpoint through the Phase 8 actuator and Phase 9 final authority."
+  ],
+  "limitations": [
+    "The retained EnergyPlus People objects do not expose genuine PMV/PPD.",
+    "Tariff and carbon values are project assumptions, not EnergyPlus outputs."
+  ],
+  "comparison_mode": "reproducible_policy",
+  "baseline_run_id": "20260726T072047Z-29380aea",
+  "controlled_run_id": "20260726T121644Z-phase10-reproducible_policy-3edee0c3",
+  "compatibility_status": "comparable",
+  "alignment": {
+    "total_expected_intervals": 8760,
+    "matched_intervals": 8760,
+    "missing_baseline_intervals": 0,
+    "missing_controlled_intervals": 0,
+    "duplicate_intervals": 0,
+    "baseline_reporting_interval_seconds": 3600.0,
+    "controlled_reporting_interval_seconds": 3600.0,
+    "reporting_frequency_match": true,
+    "matched_zone_records": 52560,
+    "missing_baseline_zone_records": 0,
+    "missing_controlled_zone_records": 0,
+    "alignment_percentage": 100.0,
+    "complete": true
+  },
+  "energy_components": {
+    "baseline": {
+      "total_energy_kwh": 58568.21190808615,
+      "hvac_energy_kwh": 5350.73793338171,
+      "cooling_energy_kwh": 15688.902978386894,
+      "heating_energy_kwh": 0.0,
+      "fan_energy_kwh": 5350.73793338171,
+      "energy_per_occupied_hour_kwh": 20.399934485575113
+    },
+    "controlled": {
+      "total_energy_kwh": 58562.58583227383,
+      "hvac_energy_kwh": 5348.769426041919,
+      "cooling_energy_kwh": 15685.077914219391,
+      "heating_energy_kwh": 0.0,
+      "fan_energy_kwh": 5348.769426041919,
+      "energy_per_occupied_hour_kwh": 20.397974863209274
+    }
+  },
+  "demand_metrics": {
+    "baseline_peak_demand_kw": 21.050576908787157,
+    "controlled_peak_demand_kw": 21.050577252463818,
+    "absolute_peak_reduction_kw": -3.436766604636432e-07,
+    "peak_reduction_percent": -1.6326234760824155e-06,
+    "baseline_peak_timestamp": "2000-05-07T15:00:00",
+    "controlled_peak_timestamp": "2000-05-07T15:00:00",
+    "baseline_average_demand_kw": 6.685868939279241,
+    "controlled_average_demand_kw": 6.685226693181944,
+    "baseline_intervals_above_warning": 987,
+    "controlled_intervals_above_warning": 988,
+    "baseline_intervals_above_critical": 0,
+    "controlled_intervals_above_critical": 0,
+    "warning_threshold_kw": 18.0,
+    "critical_threshold_kw": 30.0
+  },
+  "comfort_metrics": {
+    "baseline": {
+      "occupied_records": 14355,
+      "temperature_compliant_records": 3334,
+      "temperature_compliance_percent": 23.225357018460464,
+      "low_temperature_violations": 11014,
+      "high_temperature_violations": 7,
+      "maximum_deviation_c": 2.075077112951547,
+      "average_occupied_temperature_c": 22.026499513232732,
+      "degree_hours_outside_comfort": 1155.8051545240442,
+      "pmv_available": false,
+      "pmv_compliance_percent": null,
+      "average_pmv": null,
+      "maximum_absolute_pmv": null,
+      "average_ppd_percent": null,
+      "maximum_ppd_percent": null,
+      "comfort_method": "occupied_temperature_proxy"
+    },
+    "controlled": {
+      "occupied_records": 14355,
+      "temperature_compliant_records": 3358,
+      "temperature_compliance_percent": 23.39254615116684,
+      "low_temperature_violations": 10990,
+      "high_temperature_violations": 7,
+      "maximum_deviation_c": 2.075077113189856,
+      "average_occupied_temperature_c": 22.028470442196923,
+      "degree_hours_outside_comfort": 1155.7268927510818,
+      "pmv_available": false,
+      "pmv_compliance_percent": null,
+      "average_pmv": null,
+      "maximum_absolute_pmv": null,
+      "average_ppd_percent": null,
+      "maximum_ppd_percent": null,
+      "comfort_method": "occupied_temperature_proxy"
+    },
+    "comfort_change_percent_points": 0.16718913270637614,
+    "comfort_degradation_percent_points": 0.0,
+    "minimum_comfort_compliance_percent": 20.0,
+    "maximum_allowed_comfort_degradation_percent": 1.0,
+    "comfort_gate_passed": true
+  },
+  "cost_metrics": {
+    "baseline_cost": 468545.6952646892,
+    "controlled_cost": 468500.6866581906,
+    "absolute_cost_reduction": 45.00860649859533,
+    "cost_reduction_percent": 0.009606022839067856,
+    "currency": "INR",
+    "tariff_mode": "flat",
+    "tariff_source": "Phase 10 project assumption; replace with the applicable utility tariff.",
+    "flat_tariff_per_kwh": 8.0,
+    "assumptions": [
+      "Electricity cost is derived from EnergyPlus interval electricity.",
+      "Phase 10 project assumption; replace with the applicable utility tariff."
+    ]
+  },
+  "carbon_metrics": {
+    "baseline_carbon_kg": 41466.294030925004,
+    "controlled_carbon_kg": 41462.310769249874,
+    "absolute_carbon_reduction_kg": 3.983261675130052,
+    "carbon_reduction_percent": 0.009606022839078382,
+    "carbon_intensity_mode": "constant",
+    "carbon_intensity_source": "Phase 10 project assumption; replace with a cited grid factor.",
+    "constant_carbon_intensity_g_per_kwh": 708.0,
+    "assumptions": [
+      "Carbon is derived from EnergyPlus interval electricity.",
+      "Phase 10 project assumption; replace with a cited grid factor."
+    ]
+  },
+  "claim_gate": {
+    "claim_status": "validated_positive_savings",
+    "eligible_to_claim_savings": true,
+    "reasons": [
+      "Compatibility, full-horizon alignment, comfort, runtime, actuator, and deterministic safety checks passed."
+    ],
+    "warnings": [],
+    "approved_statement": "Under the documented compatible EnergyPlus experiment, the safety-supervised controlled run reduced facility electricity by 5.626 kWh (0.010%) while meeting the configured occupied comfort gate."
+  }
+}

@@ -1,0 +1,191 @@
+{
+  "status": "comparable",
+  "comparable": true,
+  "conditionally_comparable": false,
+  "checks": [
+    {
+      "check_id": "ENERGYPLUS_BACKEND",
+      "passed": true,
+      "required": true,
+      "baseline_value": "energyplus",
+      "controlled_value": "energyplus",
+      "message": "Both runs must use the EnergyPlus backend."
+    },
+    {
+      "check_id": "ENERGYPLUS_SOURCE",
+      "passed": true,
+      "required": true,
+      "baseline_value": "EnergyPlus",
+      "controlled_value": "EnergyPlus",
+      "message": "Both runs must identify EnergyPlus as their source."
+    },
+    {
+      "check_id": "ACCEPTED_CLASSIFICATION",
+      "passed": true,
+      "required": true,
+      "baseline_value": "official_energyplus_baseline",
+      "controlled_value": "official_energyplus_safety_supervised_controlled_evaluation",
+      "message": "Official baseline and controlled classifications are required."
+    },
+    {
+      "check_id": "RUN_COMPLETED",
+      "passed": true,
+      "required": true,
+      "baseline_value": true,
+      "controlled_value": true,
+      "message": "Both simulations must complete successfully."
+    },
+    {
+      "check_id": "BASE_MODEL_HASH",
+      "passed": true,
+      "required": true,
+      "baseline_value": "5467be2c8504b32512b81320bd8500c91cecd566ec3ab9684006c18fc7229a50",
+      "controlled_value": "5467be2c8504b32512b81320bd8500c91cecd566ec3ab9684006c18fc7229a50",
+      "message": "The immutable base-model hash must match."
+    },
+    {
+      "check_id": "DERIVED_MODEL_RELATIONSHIP",
+      "passed": true,
+      "required": true,
+      "baseline_value": "7523c515744efa4310bd40f403ebb270d649a3599ba99aa0e675e31f697b9dad",
+      "controlled_value": "7523c515744efa4310bd40f403ebb270d649a3599ba99aa0e675e31f697b9dad",
+      "message": "The controlled run must execute the same derived Phase 5 model."
+    },
+    {
+      "check_id": "WEATHER_HASH",
+      "passed": true,
+      "required": true,
+      "baseline_value": "b24506e034c43d31950862232b97b404e573de4c8bee04204f62d0890bcae478",
+      "controlled_value": "b24506e034c43d31950862232b97b404e573de4c8bee04204f62d0890bcae478",
+      "message": "Weather files must be byte-identical."
+    },
+    {
+      "check_id": "ENERGYPLUS_VERSION",
+      "passed": true,
+      "required": true,
+      "baseline_value": "26.1.0",
+      "controlled_value": "26.1.0",
+      "message": "EnergyPlus versions must match."
+    },
+    {
+      "check_id": "RUN_PERIOD",
+      "passed": true,
+      "required": true,
+      "baseline_value": [
+        "RunPeriod",
+        "Run Period 1",
+        "1",
+        "1",
+        "",
+        "12",
+        "31",
+        "",
+        "Tuesday",
+        "Yes",
+        "Yes",
+        "No",
+        "Yes",
+        "Yes"
+      ],
+      "controlled_value": [
+        "RunPeriod",
+        "Run Period 1",
+        "1",
+        "1",
+        "",
+        "12",
+        "31",
+        "",
+        "Tuesday",
+        "Yes",
+        "Yes",
+        "No",
+        "Yes",
+        "Yes"
+      ],
+      "message": "Simulation periods and initial calendar settings must match."
+    },
+    {
+      "check_id": "REPORTING_FREQUENCY",
+      "passed": true,
+      "required": true,
+      "baseline_value": "Hourly",
+      "controlled_value": "Hourly",
+      "message": "Reporting frequencies must match."
+    },
+    {
+      "check_id": "OCCUPANCY_CONFIGURATION",
+      "passed": true,
+      "required": true,
+      "baseline_value": "552fd5308a015234f1c0ff60aac8a6ac8e76ceca4fab5e92009597960254680a",
+      "controlled_value": "552fd5308a015234f1c0ff60aac8a6ac8e76ceca4fab5e92009597960254680a",
+      "message": "Occupancy configuration hashes must match."
+    },
+    {
+      "check_id": "INTERNAL_LOAD_CONFIGURATION",
+      "passed": true,
+      "required": true,
+      "baseline_value": "e41c8db1352de181423874fea4713f281e3a155e35fa347ae0c3e12731286827",
+      "controlled_value": "e41c8db1352de181423874fea4713f281e3a155e35fa347ae0c3e12731286827",
+      "message": "Internal-load configuration hashes must match when available."
+    },
+    {
+      "check_id": "ZONE_MAPPING",
+      "passed": true,
+      "required": true,
+      "baseline_value": "96831a7bc5e718c2f53a8afbae56faee01ff1484cb5df79279ebd124fe627003",
+      "controlled_value": "96831a7bc5e718c2f53a8afbae56faee01ff1484cb5df79279ebd124fe627003",
+      "message": "Zone mappings must match."
+    },
+    {
+      "check_id": "EXPECTED_INTERVALS",
+      "passed": true,
+      "required": true,
+      "baseline_value": 8760,
+      "controlled_value": 8760,
+      "message": "Complete runs must contain the same expected interval count."
+    },
+    {
+      "check_id": "CRITICAL_TELEMETRY",
+      "passed": true,
+      "required": true,
+      "baseline_value": true,
+      "controlled_value": true,
+      "message": "Critical energy, demand, weather, occupancy, and zone telemetry is required."
+    },
+    {
+      "check_id": "ZERO_SEVERE_ERRORS",
+      "passed": true,
+      "required": true,
+      "baseline_value": 0,
+      "controlled_value": 0,
+      "message": "Both runs must satisfy the configured severe-error policy."
+    },
+    {
+      "check_id": "ZERO_FATAL_ERRORS",
+      "passed": true,
+      "required": true,
+      "baseline_value": 0,
+      "controlled_value": 0,
+      "message": "Both runs must satisfy the configured fatal-error policy."
+    },
+    {
+      "check_id": "CONTROL_INJECTION_VERIFIED",
+      "passed": true,
+      "required": true,
+      "baseline_value": false,
+      "controlled_value": true,
+      "message": "The controlled run must contain a verified actuator change."
+    },
+    {
+      "check_id": "SAFETY_SUPERVISOR_ENABLED",
+      "passed": true,
+      "required": true,
+      "baseline_value": false,
+      "controlled_value": true,
+      "message": "The deterministic Phase 9 safety supervisor must have final authority."
+    }
+  ],
+  "failed_required_checks": [],
+  "warnings": []
+}
