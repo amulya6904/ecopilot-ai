@@ -1,82 +1,115 @@
-"""Central project-scoped evidence catalogue and download page."""
+"""Project-scoped evidence library rendered as a restrained editorial list."""
 
-from itertools import groupby
+from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
-
 from .artifact_views import evidence_records, is_approved_display_path
-from .components import render_error_state
+from .components import evidence_row, error_state, page_header, section_divider
+
+
+GROUP_ORDER = (
+    "Official baseline",
+    "MCP verification",
+    "LLM evidence",
+    "Runtime actuator proof",
+    "Safety validation",
+    "Quantitative comparison",
+    "Reproducibility",
+    "Submission package",
+)
+
+GROUP_METADATA = {
+    "Official baseline": (
+        "Phase 5",
+        "Frozen annual EnergyPlus reference evidence.",
+    ),
+    "MCP verification": (
+        "Phase 6",
+        "Bounded local tool access and append-only audit evidence.",
+    ),
+    "LLM evidence": (
+        "Phase 7",
+        "Local qwen3:4b advisory records with no actuator authority.",
+    ),
+    "Runtime actuator proof": (
+        "Phase 8",
+        "Discovered handle, applied action, observation, and reset proof.",
+    ),
+    "Safety validation": (
+        "Phase 9",
+        "Deterministic decisions, fault injection, and recovery evidence.",
+    ),
+    "Quantitative comparison": (
+        "Phase 10",
+        "Compatible, aligned, claim-gated annual comparison evidence.",
+    ),
+    "Reproducibility": (
+        "Phase 10",
+        "Independent repeatability report and matching hashes.",
+    ),
+    "Submission package": (
+        "Phase 11",
+        "Documentation, index, manifest, and compact deliverables.",
+    ),
+}
 
 
 def render_evidence(streamlit: Any) -> None:
-    streamlit.title("Evidence & downloads")
-    streamlit.caption(
-        "Verified artifacts are displayed with project-relative paths. Files "
-        "outside approved repository evidence roots are never exposed."
+    page_header(
+        streamlit,
+        label="Evidence library",
+        title="Verified artifacts, ready to inspect",
+        subtitle=(
+            "Every displayed path is project-relative and constrained to "
+            "approved evidence roots. Downloads never expose files outside "
+            "the repository evidence boundary."
+        ),
     )
     records = evidence_records()
     if not records:
-        render_error_state(
+        error_state(
             streamlit,
             title="No evidence catalogue available",
-            explanation="No approved Phase 5–10 artifacts were discovered.",
-            affected_feature="Evidence table and downloads",
+            explanation="No approved Phase 5–11 artifacts were discovered.",
+            affected_feature="Evidence list and downloads",
             next_step="Run the documented validation scripts and refresh.",
         )
         return
 
-    for group_name, grouped in groupby(
-        sorted(records, key=lambda item: (item.group, item.name)),
-        key=lambda item: item.group,
-    ):
-        group_records = list(grouped)
-        streamlit.subheader(group_name)
-        streamlit.dataframe(
-            pd.DataFrame(
-                [
-                    {
-                        "Artifact": item.name,
-                        "Classification": item.classification,
-                        "Run ID": item.run_id,
-                        "Timestamp": item.timestamp,
-                        "Success": item.success,
-                        "Source": item.source,
-                        "Path": item.display_path,
-                    }
-                    for item in group_records
-                ]
-            ),
-            hide_index=True,
-            width="stretch",
-            column_config={
-                "Success": streamlit.column_config.CheckboxColumn("Success"),
-                "Path": streamlit.column_config.TextColumn("Project path"),
-            },
-        )
-        with streamlit.container(horizontal=True):
-            for item in group_records:
-                path = Path(item.path)
-                if (
-                    path.is_file()
-                    and is_approved_display_path(path)
-                    and path.stat().st_size <= 25_000_000
-                ):
-                    streamlit.download_button(
-                        item.name,
-                        data=path.read_bytes(),
-                        file_name=path.name,
-                        mime=(
-                            "application/json"
-                            if path.suffix == ".json"
-                            else "text/markdown"
-                            if path.suffix == ".md"
-                            else "text/plain"
-                        ),
-                        key=f"evidence_download_{item.group}_{path.name}",
-                        icon=":material/download:",
-                    )
+    grouped: dict[str, list[object]] = defaultdict(list)
+    for record in records:
+        grouped[record.group].append(record)
+
+    for group_name in GROUP_ORDER:
+        group_records = sorted(grouped.get(group_name, []), key=lambda item: item.name)
+        if not group_records:
+            continue
+        phase, description = GROUP_METADATA[group_name]
+        section_divider(streamlit, group_name, description)
+        for item in group_records:
+            path = Path(item.path)
+            downloadable = (
+                path.is_file()
+                and is_approved_display_path(path)
+                and path.stat().st_size <= 25_000_000
+            )
+            evidence_row(
+                streamlit,
+                title=item.name,
+                phase=phase,
+                classification=item.classification,
+                run_id=item.run_id,
+                verified=path.exists() and item.success is not False,
+                description=description,
+                relative_path=item.display_path,
+                download_path=path if downloadable else None,
+                download_key=f"evidence-download-{group_name}-{path.name}",
+            )
 
 
-__all__ = ["render_evidence"]
+__all__ = [
+    "GROUP_METADATA",
+    "GROUP_ORDER",
+    "render_evidence",
+]

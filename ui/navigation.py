@@ -1,4 +1,4 @@
-"""Grouped native Streamlit navigation for the Phase 11 application shell."""
+"""Compact grouped native navigation for the EcoPilot application shell."""
 
 from dataclasses import dataclass
 
@@ -14,107 +14,198 @@ class NavigationPage:
 
 PAGE_DEFINITIONS = (
     NavigationPage(
-        "Overview", "Home", "app_pages/home.py", ":material/home:", True
+        "OVERVIEW", "Home", "app_pages/home.py", ":material/home:", True
     ),
     NavigationPage(
-        "Overview",
+        "OVERVIEW",
         "Architecture",
         "app_pages/architecture.py",
         ":material/account_tree:",
     ),
     NavigationPage(
-        "Overview",
-        "Demo flow",
+        "OVERVIEW",
+        "Demo Flow",
         "app_pages/demo_flow.py",
         ":material/play_circle:",
     ),
     NavigationPage(
-        "Development foundation",
-        "Phase 1 · Configuration",
+        "SYSTEM BUILD",
+        "01 · Configuration",
         "app_pages/phase1.py",
         ":material/settings:",
     ),
     NavigationPage(
-        "Development foundation",
-        "Phase 2 · Lightweight simulator",
+        "SYSTEM BUILD",
+        "02 · Development simulator",
         "app_pages/phase2.py",
         ":material/science:",
     ),
     NavigationPage(
-        "Development foundation",
-        "Phase 3 · Development baseline",
+        "SYSTEM BUILD",
+        "03 · Development baseline",
         "app_pages/phase3.py",
         ":material/timeline:",
     ),
     NavigationPage(
-        "Official EnergyPlus pipeline",
-        "Phase 4 · EnergyPlus integration",
+        "SYSTEM BUILD",
+        "04 · EnergyPlus integration",
         "app_pages/phase4.py",
         ":material/energy_savings_leaf:",
     ),
     NavigationPage(
-        "Official EnergyPlus pipeline",
-        "Phase 5 · Official baseline",
+        "SYSTEM BUILD",
+        "05 · Official baseline",
         "app_pages/phase5.py",
         ":material/database:",
     ),
     NavigationPage(
-        "Official EnergyPlus pipeline",
-        "Phase 6 · MCP tool layer",
+        "AUTONOMOUS LOOP",
+        "06 · MCP tool layer",
         "app_pages/phase6.py",
         ":material/hub:",
     ),
     NavigationPage(
-        "Official EnergyPlus pipeline",
-        "Phase 7 · Open-source LLM",
+        "AUTONOMOUS LOOP",
+        "07 · Local LLM agent",
         "app_pages/phase7.py",
         ":material/psychology:",
     ),
     NavigationPage(
-        "Official EnergyPlus pipeline",
-        "Phase 8 · Runtime control",
+        "AUTONOMOUS LOOP",
+        "08 · Runtime control",
         "app_pages/phase8.py",
         ":material/tune:",
     ),
     NavigationPage(
-        "Official EnergyPlus pipeline",
-        "Phase 9 · Safety supervisor",
+        "AUTONOMOUS LOOP",
+        "09 · Safety supervisor",
         "app_pages/phase9.py",
         ":material/shield:",
     ),
     NavigationPage(
-        "Official EnergyPlus pipeline",
-        "Phase 10 · Quantitative results",
+        "RESULTS",
+        "10 · Quantitative results",
         "app_pages/phase10.py",
         ":material/analytics:",
     ),
     NavigationPage(
-        "Submission",
-        "Evidence & downloads",
+        "RESULTS",
+        "Evidence & Downloads",
         "app_pages/evidence.py",
         ":material/folder_open:",
     ),
     NavigationPage(
-        "Submission",
-        "Submission checklist",
+        "RESULTS",
+        "Submission Checklist",
         "app_pages/submission_checklist.py",
         ":material/checklist:",
     ),
 )
 
+PRODUCT_PAGE_DEFINITIONS = (
+    NavigationPage(
+        "ECOPILOT", "Command Center", "app_pages/command_center.py",
+        ":material/dashboard:", True
+    ),
+    NavigationPage(
+        "ECOPILOT", "AI Copilot", "app_pages/ai_copilot.py",
+        ":material/chat:"
+    ),
+    NavigationPage(
+        "OPERATIONS", "Building", "app_pages/building.py",
+        ":material/apartment:"
+    ),
+    NavigationPage(
+        "OPERATIONS", "Analytics", "app_pages/analytics.py",
+        ":material/monitoring:"
+    ),
+    NavigationPage(
+        "OPERATIONS", "Decisions", "app_pages/decisions.py",
+        ":material/rule:"
+    ),
+    NavigationPage(
+        "ASSURANCE", "Safety", "app_pages/safety.py",
+        ":material/shield:"
+    ),
+    NavigationPage(
+        "ASSURANCE", "EnergyPlus", "app_pages/energyplus.py",
+        ":material/energy_savings_leaf:"
+    ),
+    NavigationPage(
+        "ASSURANCE", "Reports", "app_pages/reports.py",
+        ":material/folder_open:"
+    ),
+)
+
+DEVELOPER_PAGE_DEFINITIONS = (
+    NavigationPage(
+        "DEVELOPER", "Technical Evidence",
+        "app_pages/technical_evidence.py", ":material/biotech:"
+    ),
+    NavigationPage(
+        "DEVELOPER", "11 · Submission UI",
+        "app_pages/phase11.py", ":material/web:"
+    ),
+    *(
+        NavigationPage(
+            "DEVELOPER",
+            definition.title,
+            definition.path,
+            definition.icon,
+        )
+        for definition in PAGE_DEFINITIONS
+    ),
+)
+
+HIDDEN_PAGE_DEFINITIONS = (
+    NavigationPage(
+        "DEMO", "Guided Demo", "app_pages/guided_demo.py",
+        ":material/play_arrow:"
+    ),
+)
+
 
 def build_navigation(streamlit):
+    """Build the product IA while keeping every legacy route addressable."""
     groups: dict[str, list[object]] = {}
-    for definition in PAGE_DEFINITIONS:
+    for definition in PRODUCT_PAGE_DEFINITIONS:
+        visible_title = (
+            "Ask EcoPilot"
+            if definition.path == "app_pages/ai_copilot.py"
+            else definition.title
+        )
         groups.setdefault(definition.group, []).append(
+            streamlit.Page(
+                definition.path,
+                title=visible_title,
+                icon=definition.icon,
+                default=definition.default,
+            )
+        )
+
+    developer_mode = bool(
+        streamlit.session_state.get("developer_mode", False)
+    )
+    for definition in (*DEVELOPER_PAGE_DEFINITIONS, *HIDDEN_PAGE_DEFINITIONS):
+        visible = developer_mode and definition.group == "DEVELOPER"
+        group = definition.group if visible else "_HIDDEN"
+        groups.setdefault(group, []).append(
             streamlit.Page(
                 definition.path,
                 title=definition.title,
                 icon=definition.icon,
-                default=definition.default,
+                default=False,
+                visibility="visible" if visible else "hidden",
             )
         )
     return streamlit.navigation(groups, position="sidebar", expanded=True)
 
 
-__all__ = ["PAGE_DEFINITIONS", "NavigationPage", "build_navigation"]
+__all__ = [
+    "DEVELOPER_PAGE_DEFINITIONS",
+    "HIDDEN_PAGE_DEFINITIONS",
+    "PAGE_DEFINITIONS",
+    "PRODUCT_PAGE_DEFINITIONS",
+    "NavigationPage",
+    "build_navigation",
+]

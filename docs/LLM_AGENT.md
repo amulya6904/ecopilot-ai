@@ -159,3 +159,11 @@ Local inference latency is hardware-dependent. The retained proof of concept
 controls one zone and is not a real-building deployment or production safety
 certification. Future work includes faster local hardware, multi-zone
 coordination, and native PMV evidence while preserving the same trust boundary.
+
+## Dashboard presentation modes
+
+Judge Mode uses persisted Phase 7 evidence and does not expose the live advisory
+button. Developer Mode restores **Generate Advisory Proposal**, its four-stage
+progress display, raw diagnostics, and the existing eight-minute outer limit.
+This presentation switch does not change prompts, qwen3:4b settings, retries,
+timeouts, tools, schemas, or validation behavior.

@@ -1,5 +1,45 @@
 # EcoPilot AI
 
+> A local, safety-supervised physical-AI loop that turns official EnergyPlus
+> evidence into typed advisory actions, deterministic control, and reproducible
+> proof.
+
+![EcoPilot verified result summary](assets/result_summary.svg)
+
+## Verified result
+
+The preserved compatible annual EnergyPlus experiment measured
+**58,568.211908 kWh** for the fixed-schedule baseline and
+**58,562.585832 kWh** for the safety-supervised controlled run:
+**5.626076 kWh (0.009606%) lower**. Occupied-temperature proxy compliance
+changed by **+0.167189 percentage points**, peak demand remained essentially
+unchanged, PMV/PPD was unavailable, and severe/fatal errors were **0 / 0**.
+
+## Architecture at a glance
+
+![EcoPilot local trust-boundary architecture](assets/architecture_flow.svg)
+
+EnergyPlus remains the source of physical truth. MCP exposes bounded local
+evidence, qwen3:4b returns a compact typed advisory, and deterministic Python
+validation plus the Phase 9 safety supervisor retain final actuator authority.
+Applied actions are observed, resettable, and linked to persisted evidence.
+
+## Quick start
+
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+Copy-Item .env.example .env
+python -m pytest -q
+python -m streamlit run app.py
+```
+
+The interface defaults to the **Command Center**, **Judge Mode**, and
+**Verified Demo Replay**. Replay uses pre-generated verified artifacts and
+does not require Ollama or an EnergyPlus rerun. Turn Judge Mode off only when
+the preserved Developer Mode pages and explicit execution controls are needed.
+
 **Safety-Supervised Autonomous EnergyPlus Building Control**
 
 ## 1. Project title
@@ -40,7 +80,9 @@ reproducible comparison gate.
 - Twenty-two of twenty-two fault scenarios passed, with all decision outcomes
   exercised and zero severe or fatal EnergyPlus errors.
 - Compatible, aligned, claim-gated, reproducible Phase 10 comparison.
-- Offline Streamlit dashboard, Judge Mode, evidence catalogue, and downloads.
+- Offline Streamlit product experience with Command Center, AI Copilot,
+  Building, Analytics, Decisions, Safety, EnergyPlus, Reports, Guided Demo,
+  Developer Mode, and project-scoped downloads.
 
 ## 5. Architecture
 
@@ -216,10 +258,12 @@ inference latency depends on CPU, memory, model state, and thermal conditions.
 python -m streamlit run app.py
 ```
 
-The sidebar groups Overview, Development foundation, Official EnergyPlus
-pipeline, and Submission pages. Judge Mode condenses Phases 1–9 but never hides
-the final evidence or the small scale of the result. No simulation or Ollama
-request starts on page load.
+The default sidebar is product-centric: Command Center, AI Copilot, Building,
+Analytics, Decisions, Safety, EnergyPlus, and Reports. Judge Mode keeps the
+preserved Phase 1–11 routes registered but hidden from the primary judge flow.
+Developer Mode exposes those technical routes and their original explicit run
+controls. Verified Demo Replay is the default source; Live Services is opt-in.
+No simulation, MCP session, fault suite, or Ollama request starts on page load.
 
 ## 16. Running validation scripts
 
@@ -269,11 +313,12 @@ documentation display repository-relative paths.
 
 ## 19. Demo flow
 
-Enable Judge Mode, open **Demo flow**, and follow its nine artifact-backed
-steps. The timed narration and backup plan are in
-[`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md). Preload Home, Architecture,
-Phase 5, Phase 7, Phase 9, and Phase 10; do not wait for a live annual
-EnergyPlus run during a three-minute presentation.
+Keep Judge Mode and Verified Demo Replay enabled, open **Command Center**, and
+select **Start guided demo**. The seven deterministic scenes cover status,
+telemetry, saved qwen3:4b evidence, safe control, unsafe rejection, analytics,
+and the approved closing claim. The timed narration and backup plan are in
+[`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md). Do not wait for a live annual
+EnergyPlus run or cold local-model response during a three-minute presentation.
 
 ## 20. Documentation index
 
@@ -287,6 +332,7 @@ EnergyPlus run during a three-minute presentation.
 - [Final results](docs/FINAL_RESULTS.md)
 - [Reproducibility](docs/REPRODUCIBILITY.md)
 - [Demo script](docs/DEMO_SCRIPT.md)
+- [Phase 12 hackathon demo experience](docs/PHASE12_HACKATHON_DEMO.md)
 - [Presentation outline](docs/PRESENTATION_OUTLINE.md)
 - [Submission checklist](docs/SUBMISSION_CHECKLIST.md)
 - [Official requirements mapping](docs/OFFICIAL_REQUIREMENTS_MAPPING.md)

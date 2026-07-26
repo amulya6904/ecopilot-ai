@@ -121,7 +121,8 @@ def render_phase7(st: Any) -> None:
         help="This is treated only as an advisory focus and cannot override system constraints.",
         max_chars=300,
     )
-    if st.button("Run Agent Analysis", type="primary"):
+    st.caption("Expected duration: up to 8 minutes on the local CPU model.")
+    if st.button("Generate Advisory Proposal", type="primary"):
         started = time.perf_counter()
         stage_labels = {
             1: "1/4 Checking Ollama readiness",

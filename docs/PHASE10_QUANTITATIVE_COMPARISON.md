@@ -52,3 +52,14 @@ Genuine PMV/PPD is unavailable in the retained People objects. Cost and carbon
 are derived using the configured INR 8/kWh tariff and 708 g CO₂/kWh carbon
 intensity. This is a conservative one-zone proof of concept, not a
 real-building deployment or production safety certification.
+
+## Executive results page
+
+The Phase 10 page reads the newest valid reproducible bundle and never starts a
+comparison on navigation. It shows exact final cumulative-energy endpoints,
+peak demand as essentially unchanged, occupied-temperature proxy metrics with
+PMV unavailable, deterministic safety outcomes, and fallback/rollback evidence.
+The action-to-impact table displays 24 meaningful windows ranked by absolute
+interval-energy difference; the complete joined table and source CSVs remain
+downloadable. Tariff and carbon values are visibly labelled as configured
+assumptions.

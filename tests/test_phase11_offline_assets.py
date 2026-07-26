@@ -6,6 +6,7 @@ RUNTIME_SOURCES = (
     *sorted(Path("app_pages").glob("*.py")),
     *sorted(Path("ui").glob("*.py")),
     Path(".streamlit/config.toml"),
+    Path("assets/ecopilot.css"),
 )
 
 
@@ -24,3 +25,16 @@ def test_streamlit_runtime_uses_no_external_assets_or_unsafe_markup():
         text = path.read_text(encoding="utf-8").lower()
         assert "https://" not in text, path
         assert not any(token in text for token in forbidden), path
+
+
+def test_required_original_local_svg_assets_exist_and_are_offline():
+    for name in (
+        "logo_mark.svg",
+        "architecture_flow.svg",
+        "closed_loop_flow.svg",
+        "result_summary.svg",
+    ):
+        path = Path("assets") / name
+        text = path.read_text(encoding="utf-8")
+        assert text.startswith("<svg")
+        assert "https://" not in text

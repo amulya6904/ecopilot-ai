@@ -35,8 +35,8 @@ def test_contextual_disclosures_exist_without_a_limitations_page():
             Path("docs/SUBMISSION_CHECKLIST.md"),
         )
     }
-    assert "one conservatively controlled" in text_by_path[Path("ui/home.py")]
-    assert "local-model latency" in text_by_path[Path("ui/architecture.py")]
+    assert "conservative single-zone" in text_by_path[Path("ui/home.py")]
+    assert "deterministic authority" in text_by_path[Path("ui/architecture.py")]
     assert "hardware-dependent" in text_by_path[Path("ui/phase7.py")]
     assert "prototype project guardrails" in text_by_path[Path("ui/phase9.py")]
     assert "essentially unchanged" in text_by_path[Path("ui/phase10.py")]

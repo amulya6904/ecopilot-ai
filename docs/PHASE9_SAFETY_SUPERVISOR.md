@@ -52,3 +52,12 @@ and emergencies to calculate intervention and recovery metrics.
 Savings eligibility additionally requires `safety_supervisor_enabled = true`,
 verified control injection, no emergency comfort breach, complete telemetry,
 zero severe/fatal errors, and a passed comfort gate.
+
+## Dashboard safety presentation
+
+Home shows 22/22 scenarios and 0/0 severe/fatal errors. Demo Flow separates an
+unsafe rejection, validated fallback, post-action observation, and the complete
+fault suite. Quantitative Results shows persisted approve/clamp/hold/reject,
+fallback, and emergency counts plus the full 521-event fallback timeline for
+the accepted comparison. Judge Mode cannot launch validation; Developer Mode
+retains **Run Safety Test Suite** and **Refresh Verified Results**.

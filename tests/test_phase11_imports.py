@@ -15,8 +15,12 @@ def test_phase11_imports_do_not_execute_ollama_energyplus_or_subprocess(monkeypa
     monkeypatch.setattr(EnergyPlusBackend, "run_simulation", forbidden)
     for name in (
         "ui.constants",
+        "ui.tokens",
+        "ui.theme",
+        "ui.shell",
         "ui.formatting",
         "ui.navigation",
+        "ui.charts",
         "ui.home",
         "ui.architecture",
         "ui.demo_flow",

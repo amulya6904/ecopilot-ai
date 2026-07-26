@@ -61,7 +61,8 @@ def render_phase6(st: Any) -> None:
     )
     st.subheader("Read-only resource catalogue")
     st.dataframe(pd.DataFrame(RESOURCE_CATALOGUE), hide_index=True, width="stretch")
-    if st.button("Run MCP Client Smoke Test", type="primary"):
+    st.caption("Expected duration: up to 2 minutes.")
+    if st.button("Validate MCP Tools", type="primary"):
         with st.spinner("Starting a separate stdio server and official SDK client..."):
             try:
                 completed = subprocess.run(

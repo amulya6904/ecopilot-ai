@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-labelledby="title desc">
+  <title id="title">EcoPilot AI architecture flow</title>
+  <desc id="desc">EnergyPlus evidence passes through MCP and a local advisory model before deterministic safety authority controls one verified actuator.</desc>
+  <rect width="1200" height="300" fill="#FAF8F3"/>
+  <g fill="none" stroke="#BBB5AA" stroke-width="1">
+    <path d="M90 132H1110"/>
+    <path d="M892 224H308"/>
+  </g>
+  <g fill="#171714" font-family="Helvetica Neue, Segoe UI, Arial, sans-serif">
+    <g transform="translate(28 70)"><rect width="160" height="124" fill="#171714"/><text x="20" y="46" fill="#F5F2EB" font-size="11" letter-spacing="1.5">PHYSICS</text><text x="20" y="79" fill="#F5F2EB" font-size="19">EnergyPlus</text><text x="20" y="101" fill="#F5F2EB" font-size="12">Runtime + telemetry</text></g>
+    <g transform="translate(245 82)"><rect width="150" height="100" fill="#FFFFFF" stroke="#DDD8CE"/><text x="18" y="41" font-size="11" letter-spacing="1.4">EVIDENCE</text><text x="18" y="67" font-size="18">MCP layer</text></g>
+    <g transform="translate(452 82)"><rect width="150" height="100" fill="#FFFFFF" stroke="#DDD8CE"/><text x="18" y="41" font-size="11" letter-spacing="1.4">ADVISORY</text><text x="18" y="67" font-size="18">qwen3:4b</text></g>
+    <g transform="translate(659 70)"><rect width="184" height="124" fill="#E8F0EA" stroke="#2F654D"/><text x="18" y="42" fill="#2F654D" font-size="11" letter-spacing="1.4">FINAL AUTHORITY</text><text x="18" y="72" font-size="18">Safety supervisor</text><text x="18" y="96" font-size="12">Validate · clamp · reject</text></g>
+    <g transform="translate(900 82)"><rect width="170" height="100" fill="#FFFFFF" stroke="#DDD8CE"/><text x="18" y="41" font-size="11" letter-spacing="1.4">CONTROL</text><text x="18" y="67" font-size="18">Actuator injection</text></g>
+    <text x="500" y="243" font-size="12" fill="#55534D">Post-action observation · verified reset · fallback / rollback</text>
+  </g>
+  <g fill="#171714"><path d="M211 132l-8-5v10z"/><path d="M418 132l-8-5v10z"/><path d="M625 132l-8-5v10z"/><path d="M866 132l-8-5v10z"/><path d="M1094 132l-8-5v10z"/><path d="M292 224l8-5v10z"/></g>
+</svg>

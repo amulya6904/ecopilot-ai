@@ -9,10 +9,10 @@ from ui.navigation import PAGE_DEFINITIONS
 def test_grouped_navigation_has_all_required_pages_and_no_limitations_page():
     groups = [page.group for page in PAGE_DEFINITIONS]
     assert list(dict.fromkeys(groups)) == [
-        "Overview",
-        "Development foundation",
-        "Official EnergyPlus pipeline",
-        "Submission",
+        "OVERVIEW",
+        "SYSTEM BUILD",
+        "AUTONOMOUS LOOP",
+        "RESULTS",
     ]
     assert len(PAGE_DEFINITIONS) == 15
     assert sum(page.default for page in PAGE_DEFINITIONS) == 1
@@ -34,14 +34,11 @@ def test_grouped_navigation_has_all_required_pages_and_no_limitations_page():
 def test_judge_mode_condenses_technical_pages_without_hiding_evidence():
     test_app = AppTest.from_file("app.py", default_timeout=30).run()
     assert not test_app.exception
-    test_app.sidebar.toggle[0].set_value(True).run()
+    assert test_app.sidebar.toggle[0].value is True
     test_app.switch_page("app_pages/phase1.py").run()
     assert not test_app.exception
     assert any(
-        "Judge Mode is showing the verified summary" in item.value
-        for item in test_app.info
+        "Judge Mode · verified artifacts only" in item.value
+        for item in test_app.markdown
     )
-    assert any(
-        item.label == "Show full technical evidence"
-        for item in test_app.toggle
-    )
+    assert not test_app.button

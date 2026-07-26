@@ -132,3 +132,15 @@
 - **Evidence:** Control injection verified, 22/22 safety, reproducible Phase 10.
 - **Speaker note:** Close with the honest 5.626 kWh result and invite judges to
   inspect the evidence page.
+
+## Visual direction for the final deck
+
+- Use the same warm ivory, near-black, thin-divider, and muted-sage language as
+  the dashboard.
+- Reuse only the original local assets in `assets/`.
+- Prefer one large result, one sentence, and one evidence reference per slide.
+- Use the eight-stage closed-loop visual rather than the former six-card Home
+  treatment.
+- Keep the small one-zone result, PMV unavailability, unchanged peak, tariff
+  assumption, and carbon assumption visible on the result slides.
+- Use screenshots captured at 1920×1080 after final responsive review.

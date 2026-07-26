@@ -107,3 +107,12 @@ deterministic run.
 The comparison loader reads Phase 5 manifests and normalized products directly;
 it does not expose a new path-selecting MCP tool and cannot promote development
 simulator data.
+
+## Dashboard evidence presentation
+
+The MCP verification appears in Home system status, Demo Flow step 03, the
+Phase 6 judge summary, and the Evidence & Downloads library. Judge Mode reads
+the catalogue and persisted audit evidence only. Developer Mode exposes the
+existing **Validate MCP Tools** smoke-test control with its expected duration.
+No new MCP tools, resources, permissions, or path-selection behavior are
+introduced by the presentation layer.

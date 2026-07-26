@@ -289,3 +289,47 @@ The preserved verified result is:
 - The measured facility-level effect is small and peak demand is unchanged.
 - Multi-zone coordination, native-PMV validation, site-calibrated thresholds,
   real tariffs, and a read-only building shadow deployment remain future work.
+
+## 16. Presentation architecture
+
+The Phase 11 interface is a read-only presentation layer over the accepted
+Phase 1–10 modules and artifacts. A single local stylesheet supplies warm ivory,
+near-black, thin-border, and semantic-status tokens. Home, Architecture, and
+Demo Flow are judge-facing narrative pages; Phase 1–9 keep their working
+renderers inside the Developer Mode technical expander; Phase 10 reads only the
+newest valid reproducible bundle.
+
+Judge Mode is the default and disables accidental access to expensive execution
+controls while preserving classifications, scope disclosures, artifact paths,
+and downloads. Developer Mode exposes the original explicit run controls and
+diagnostics. No navigation or page import starts EnergyPlus, Ollama, MCP client
+execution, Phase 9, or Phase 10.
+
+The presentation uses only local assets:
+
+- `assets/logo_mark.svg`
+- `assets/architecture_flow.svg`
+- `assets/closed_loop_flow.svg`
+- `assets/result_summary.svg`
+
+Chart sampling is display-only, retains the exact final row, and never feeds a
+metric calculation.
+
+## 17. Phase 12 product architecture
+
+Phase 12 adds a product-centric shell over the same accepted artifacts and
+renderers. Command Center, AI Copilot, Building, Analytics, Decisions, Safety,
+EnergyPlus, and Reports are the primary routes. The old Phase 1–11 routes stay
+registered and become visible in Developer Mode. Guided Demo is a registered
+seven-scene replay route opened from Command Center.
+
+Verified Demo Replay is the default and performs no automatic service work.
+Live Copilot questions explicitly reuse the Phase 7 Ollama client, MCP bridge,
+and advisory agent. A live control proposal is also evaluated by the existing
+Phase 9 supervisor against a saved EnergyPlus telemetry state, but the UI has
+no actuator write boundary. EnergyPlus execution remains limited to the
+preserved explicit developer workflows.
+
+Immutable artifact reads are cached by path, modification time, and size.
+Annual telemetry is column-selected and downsampled only for visualization;
+official metrics always come from the full-resolution Phase 10 summary.

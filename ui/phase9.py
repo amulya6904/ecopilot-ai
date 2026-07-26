@@ -269,8 +269,9 @@ def render_phase9(st: Any) -> None:
     )
 
     controls = st.container(horizontal=True)
+    st.caption("Expected duration: approximately 1–3 minutes.")
     if controls.button(
-        "Run complete safety validation",
+        "Run Safety Test Suite",
         type="primary",
         width="stretch",
     ):
@@ -289,7 +290,7 @@ def render_phase9(st: Any) -> None:
                 state="complete" if result["success"] else "error",
             )
         directory, metadata, summary = _latest_run()
-    if controls.button("Refresh latest artifacts", width="stretch"):
+    if controls.button("Refresh Verified Results", width="stretch"):
         directory, metadata, summary = _latest_run()
 
     if directory is None:

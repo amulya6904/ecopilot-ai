@@ -79,8 +79,12 @@ def latest_phase10_directory(*, require_reproducible: bool = True) -> Path | Non
     return None
 
 
-@st.cache_data(ttl=60, max_entries=8, show_spinner=False)
-def load_phase10_bundle(directory_text: str) -> dict[str, Any]:
+@st.cache_data(max_entries=8, show_spinner=False)
+def _load_phase10_bundle_cached(
+    directory_text: str,
+    fingerprint: tuple[tuple[str, int, int], ...],
+) -> dict[str, Any]:
+    del fingerprint
     directory = Path(directory_text)
 
     def read_json(name: str) -> dict[str, Any]:
@@ -109,6 +113,99 @@ def load_phase10_bundle(directory_text: str) -> dict[str, Any]:
             encoding="utf-8"
         ),
     }
+
+
+def load_phase10_bundle(directory_text: str) -> dict[str, Any]:
+    """Load immutable artifacts with safe path, size, and mtime invalidation."""
+    directory = Path(directory_text)
+    names = (
+        "final_summary.json",
+        "compatibility_report.json",
+        "reliability_metrics.json",
+        "agent_metrics.json",
+        "safety_metrics.json",
+        "reproducibility_report.json",
+        "comparison_manifest.json",
+        "baseline_summary.json",
+        "controlled_summary.json",
+        "energy_comparison.csv",
+        "demand_comparison.csv",
+        "comfort_comparison.csv",
+        "cost_comparison.csv",
+        "carbon_comparison.csv",
+        "action_summary.csv",
+        "executive_summary.md",
+    )
+    fingerprint = tuple(
+        (name, (directory / name).stat().st_mtime_ns, (directory / name).stat().st_size)
+        for name in names
+    )
+    return _load_phase10_bundle_cached(directory_text, fingerprint)
+
+
+@st.cache_data(max_entries=8, show_spinner=False)
+def _load_event_timeline_cached(
+    runtime_directory_text: str,
+    fingerprint: tuple[tuple[str, int, int], ...],
+) -> pd.DataFrame:
+    del fingerprint
+    runtime_directory = Path(runtime_directory_text)
+    rows: list[dict[str, Any]] = []
+    for filename, event_type in (
+        ("fallback_events.json", "Fallback"),
+        ("controlled_rollback_events.json", "Rollback"),
+        ("controlled_emergency_events.json", "Emergency"),
+    ):
+        path = runtime_directory / filename
+        values = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(values, list):
+            continue
+        for value in values:
+            if isinstance(value, dict):
+                rows.append(
+                    {
+                        "timestamp": value.get(
+                            "simulation_timestamp",
+                            value.get("timestamp"),
+                        ),
+                        "event_type": event_type,
+                        "reason": value.get(
+                            "reason_code",
+                            value.get("reason", "Not recorded"),
+                        ),
+                        "fallback_value_c": value.get("fallback_value_c"),
+                    }
+                )
+    return pd.DataFrame(
+        rows,
+        columns=("timestamp", "event_type", "reason", "fallback_value_c"),
+    )
+
+
+def load_phase10_event_timeline(directory_text: str) -> pd.DataFrame:
+    """Load project-scoped fallback, rollback, and emergency event evidence."""
+    directory = Path(directory_text)
+    controlled = _json(directory / "controlled_summary.json")
+    runtime_directory = Path(str(controlled["runtime_artifact_directory"])).resolve()
+    if not (
+        runtime_directory == RESULTS_ROOT
+        or RESULTS_ROOT in runtime_directory.parents
+    ):
+        raise ValueError("Runtime evidence is outside the approved results root.")
+    names = (
+        "fallback_events.json",
+        "controlled_rollback_events.json",
+        "controlled_emergency_events.json",
+    )
+    fingerprint = tuple(
+        (
+            name,
+            (runtime_directory / name).stat().st_mtime_ns,
+            (runtime_directory / name).stat().st_size,
+        )
+        for name in names
+    )
+    return _load_event_timeline_cached(str(runtime_directory), fingerprint)
 
 
 def _record_from_json(
@@ -158,7 +255,7 @@ def _record_from_json(
 def evidence_records() -> list[EvidenceRecord]:
     records: list[EvidenceRecord] = []
     baseline = _record_from_json(
-        "EnergyPlus baseline",
+        "Official baseline",
         "Phase 5 baseline manifest",
         RESULTS_ROOT / "official" / "phase5_energyplus_baseline_manifest.json",
         classification="official_energyplus_baseline",
@@ -169,7 +266,7 @@ def evidence_records() -> list[EvidenceRecord]:
 
     for group, name, path, classification, source, required in (
         (
-            "MCP tool validation",
+            "MCP verification",
             "MCP audit log",
             RESULTS_ROOT / "audit" / "mcp_tool_calls.jsonl",
             "local_mcp_audit",
@@ -177,7 +274,7 @@ def evidence_records() -> list[EvidenceRecord]:
             True,
         ),
         (
-            "LLM advisory evidence",
+            "LLM evidence",
             "Agent audit log",
             RESULTS_ROOT / "audit" / "agent_runs.jsonl",
             "advisory_agent_audit",
@@ -185,7 +282,7 @@ def evidence_records() -> list[EvidenceRecord]:
             True,
         ),
         (
-            "Documentation",
+            "Submission package",
             "System architecture",
             DOCS_ROOT / "SYSTEM_ARCHITECTURE.md",
             "submission_document",
@@ -193,7 +290,7 @@ def evidence_records() -> list[EvidenceRecord]:
             True,
         ),
         (
-            "Documentation",
+            "Submission package",
             "Demo script",
             DOCS_ROOT / "DEMO_SCRIPT.md",
             "submission_document",
@@ -201,7 +298,7 @@ def evidence_records() -> list[EvidenceRecord]:
             True,
         ),
         (
-            "Documentation",
+            "Submission package",
             "Submission checklist",
             DOCS_ROOT / "SUBMISSION_CHECKLIST.md",
             "submission_document",
@@ -209,7 +306,7 @@ def evidence_records() -> list[EvidenceRecord]:
             True,
         ),
         (
-            "Documentation",
+            "Submission package",
             "Presentation outline",
             DOCS_ROOT / "PRESENTATION_OUTLINE.md",
             "submission_document",
@@ -256,7 +353,7 @@ def evidence_records() -> list[EvidenceRecord]:
         )
         if latest:
             record = _record_from_json(
-                "LLM advisory evidence",
+                "LLM evidence",
                 "Latest advisory summary",
                 latest / "run_metadata.json",
                 classification="llm_advisory_proposal",
@@ -280,7 +377,7 @@ def evidence_records() -> list[EvidenceRecord]:
         )
         if latest:
             record = _record_from_json(
-                "Runtime actuator evidence",
+                "Runtime actuator proof",
                 "Latest controlled-run metadata",
                 latest / "controlled_summary.json",
                 classification="energyplus_runtime_actuator_control",
@@ -315,7 +412,7 @@ def evidence_records() -> list[EvidenceRecord]:
     if comparison:
         for group, name, filename, classification in (
             (
-                "Phase 10 comparison",
+                "Quantitative comparison",
                 "Final comparison summary",
                 "final_summary.json",
                 "official_energyplus_comparison",
@@ -327,7 +424,7 @@ def evidence_records() -> list[EvidenceRecord]:
                 "deterministic_reproducibility",
             ),
             (
-                "Phase 10 comparison",
+                "Quantitative comparison",
                 "Comparison manifest",
                 "comparison_manifest.json",
                 "official_energyplus_comparison_manifest",
@@ -373,4 +470,5 @@ __all__ = [
     "is_approved_display_path",
     "latest_phase10_directory",
     "load_phase10_bundle",
+    "load_phase10_event_timeline",
 ]

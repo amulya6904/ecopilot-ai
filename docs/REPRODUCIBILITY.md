@@ -17,3 +17,9 @@ comparison bundles and updates their final/judge summaries.
 LLM-assisted runs are not required to be bit-identical. They preserve the Ollama
 model, prompt version, action history, and explicit limitation instead. The
 official measured result uses no LLM requests.
+
+The dashboard never executes this verification automatically. It selects only a
+valid comparison whose displayed ID is linked to the passing repeatability
+report, reads immutable files with path/size/mtime cache invalidation, and shows
+model/weather hash status in the Phase 10 validity band. Display downsampling
+does not participate in any reproducibility metric.

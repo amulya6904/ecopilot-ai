@@ -120,6 +120,10 @@ def render_phase8(st: Any) -> None:
         st.error("\n".join(availability.readiness_issues))
 
     st.subheader("Runtime validation controls")
+    st.caption(
+        "Expected duration: discovery is brief; closed-loop validations can "
+        "take several minutes. Local LLM validation may take up to 9 minutes."
+    )
     buttons = st.columns(4)
     if buttons[0].button("Discover Actuators", width="stretch"):
         with st.status("Running Runtime API discovery", expanded=True) as status:
@@ -132,7 +136,7 @@ def render_phase8(st: Any) -> None:
                 ),
                 state="complete" if result["success"] else "error",
             )
-    if buttons[1].button("Run Manual Actuator Test", width="stretch"):
+    if buttons[1].button("Run Closed-Loop Validation", width="stretch"):
         _execute(st, "Manual actuator validation", run_manual_validation)
     if buttons[2].button("Run Mock Closed Loop", width="stretch"):
         _execute(st, "Mock closed-loop validation", run_mock_closed_loop)
@@ -142,7 +146,7 @@ def render_phase8(st: Any) -> None:
         help="Inference completes before EnergyPlus callbacks are registered.",
     )
     if buttons[3].button(
-        "Run LLM-Assisted Closed Loop",
+        "Run LLM-Assisted Closed-Loop Validation",
         disabled=not llm_opt_in,
         width="stretch",
     ):

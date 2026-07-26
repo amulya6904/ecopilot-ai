@@ -85,3 +85,16 @@ shown independently and are not summed.
   calibration, more weather years, and a read-only building shadow pilot.
 
 Full precision remains in the Phase 10 JSON and CSV artifacts.
+
+## Executive dashboard presentation
+
+The Quantitative Results page presents this unchanged evidence in the following
+order: result claim, validity band, asymmetric headline KPIs, cumulative energy,
+peak demand, occupied-temperature proxy performance, action-to-impact windows,
+requested-versus-approved values, deterministic safety outcomes, fallback
+timeline, methodology, technical validity, scope, and full-resolution downloads.
+
+Only the action table and chart marks are reduced for display. All metrics,
+endpoint labels, compatibility checks, and downloadable CSVs use the accepted
+full-resolution artifacts. Peak demand is titled **“Peak demand remained
+effectively unchanged”** and PMV is displayed as **Unavailable**.

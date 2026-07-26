@@ -192,6 +192,10 @@ def render_phase5(st: Any) -> None:
         value=False,
         key="phase5_verify_reproducibility",
     )
+    st.caption(
+        "Expected duration: approximately 1–3 minutes; a reproducibility "
+        "repeat takes longer."
+    )
     if st.button(
         "Run Official EnergyPlus Baseline",
         type="primary",

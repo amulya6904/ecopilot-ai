@@ -110,3 +110,14 @@ recording remain unchecked.
 - [ ] Export architecture/results documents to PDF if the portal requires PDF.
 - [ ] Upload repository URL, video, presentation, screenshots, and final ZIP.
 - [ ] Perform a final portal preview before submission.
+
+## Final dashboard visual review
+
+- [x] Apply the local warm-ivory and near-black design system.
+- [x] Include the four original local SVG assets.
+- [x] Verify Judge Mode contains no expensive execution buttons.
+- [x] Verify Developer Mode retains Phase 2–9 explicit controls.
+- [x] Verify Home, Architecture, Demo Flow, Phase 1–10, Evidence, and Checklist
+  with Streamlit AppTest.
+- [ ] Capture final 1920×1080, 1366×768, and narrow-width screenshots.
+- [ ] Review the three final viewport captures for clipping and chart legibility.

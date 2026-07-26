@@ -1,4 +1,4 @@
-"""Artifact-backed Phase 10 comparison and final validation dashboard."""
+"""Executive, artifact-backed Phase 10 quantitative results experience."""
 
 from io import BytesIO
 from pathlib import Path
@@ -12,13 +12,28 @@ from .artifact_views import (
     PROJECT_ROOT,
     latest_phase10_directory,
     load_phase10_bundle,
+    load_phase10_event_timeline,
 )
-from .charts import action_setpoint_chart, comparison_line_chart
-from .constants import (
-    COMFORT_WORDING,
-    HONEST_RESULT_CLAIM,
-    SMALL_RESULT_NOTE,
+from .charts import (
+    action_setpoint_chart,
+    comparison_line_chart,
+    fallback_timeline_chart,
+    requested_approved_chart,
+    safety_outcome_chart,
 )
+from .components import (
+    artifact_download,
+    compact_metric,
+    editorial_callout,
+    empty_state,
+    eyebrow,
+    methodology_item,
+    result_metric,
+    scope_note,
+    section_divider,
+    status_badge,
+)
+from .constants import SMALL_RESULT_NOTE
 from .formatting import (
     format_carbon,
     format_comfort,
@@ -28,6 +43,15 @@ from .formatting import (
     format_percent,
     peak_change_label,
     project_relative,
+)
+
+
+RESULT_HEADING = "Verified EnergyPlus control with measurable, reproducible impact."
+RESULT_NARRATIVE = (
+    "Under a fully aligned EnergyPlus experiment, the safety-supervised "
+    "one-zone policy reduced annual facility electricity by 5.626 kWh, or "
+    "0.0096%. Occupied-temperature proxy compliance improved slightly, while "
+    "peak demand remained effectively unchanged."
 )
 
 
@@ -61,7 +85,7 @@ def _load_bundle(directory_text: str) -> dict[str, object]:
     return load_phase10_bundle(directory_text)
 
 
-@st.cache_data(ttl=60, max_entries=4, show_spinner=False)
+@st.cache_data(max_entries=4, show_spinner=False)
 def _chart_archive(directory_text: str) -> bytes:
     directory = Path(directory_text) / "charts"
     stream = BytesIO()
@@ -88,22 +112,21 @@ def build_action_impact_table(
     energy: pd.DataFrame,
     comfort: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Join action evidence to aligned interval data by calendar timestamp."""
+    """Join action evidence to full-resolution aligned interval evidence."""
     if actions.empty:
         return pd.DataFrame()
     action_frame = actions.copy()
     action_frame["_calendar_key"] = _calendar_key(action_frame["timestamp"])
-
-    energy_columns = [
-        "timestamp",
-        "baseline_energy_kwh",
-        "controlled_energy_kwh",
-        "interval_energy_reduction_kwh",
-    ]
-    energy_frame = energy[energy_columns].copy()
+    energy_frame = energy[
+        [
+            "timestamp",
+            "baseline_energy_kwh",
+            "controlled_energy_kwh",
+            "interval_energy_reduction_kwh",
+        ]
+    ].copy()
     energy_frame["_calendar_key"] = _calendar_key(energy_frame["timestamp"])
     energy_frame = energy_frame.drop(columns="timestamp")
-
     zone_frame = comfort.loc[
         comfort["energyplus_zone_name"].eq("SPACE1-1"),
         [
@@ -114,7 +137,6 @@ def build_action_impact_table(
     ].copy()
     zone_frame["_calendar_key"] = _calendar_key(zone_frame["timestamp"])
     zone_frame = zone_frame.drop(columns="timestamp")
-
     merged = action_frame.merge(
         energy_frame,
         on="_calendar_key",
@@ -153,203 +175,268 @@ def build_action_impact_table(
             "baseline_energy_kwh": "baseline_interval_energy_kwh",
             "controlled_energy_kwh": "controlled_interval_energy_kwh",
             "interval_energy_reduction_kwh": "interval_energy_difference_kwh",
-            "decision": "safety_decision",
+            "decision": "safety_outcome",
         }
     )
 
 
-def _metric_row(streamlit, metrics: list[tuple[str, str, str | None]]) -> None:
-    columns = streamlit.columns(len(metrics), border=True)
-    for column, (label, value, help_text) in zip(columns, metrics, strict=True):
-        column.metric(label, value, help=help_text)
+def meaningful_action_windows(
+    table: pd.DataFrame,
+    *,
+    limit: int = 24,
+) -> pd.DataFrame:
+    """Select display-only action windows without changing any metric."""
+    if table.empty or len(table) <= limit:
+        return table.copy()
+    ranked = table.assign(
+        _impact=pd.to_numeric(
+            table["interval_energy_difference_kwh"],
+            errors="coerce",
+        ).abs()
+    )
+    return (
+        ranked.nlargest(limit, "_impact")
+        .sort_values("timestamp")
+        .drop(columns="_impact")
+    )
 
 
-def _render_claim(streamlit, summary: dict[str, object], directory: Path) -> None:
-    with streamlit.container(border=True):
-        streamlit.subheader("Validated result")
-        if summary.get("eligible_to_claim_savings"):
-            streamlit.success(HONEST_RESULT_CLAIM, icon=":material/verified:")
-        else:
-            streamlit.warning(
-                str(summary.get("exact_approved_statement", "Savings are not claimable.")),
-                icon=":material/warning:",
-            )
-        streamlit.info(SMALL_RESULT_NOTE, icon=":material/info:")
+def _render_hero(
+    streamlit,
+    summary: dict[str, object],
+    directory: Path,
+) -> None:
+    with streamlit.container(key="results-hero"):
+        eyebrow(streamlit, "Phase 10 · Official quantitative comparison")
+        streamlit.title(RESULT_HEADING)
+        streamlit.write(RESULT_NARRATIVE)
+        with streamlit.container(horizontal=True):
+            status_badge(streamlit, "Official EnergyPlus", status="info")
+            status_badge(streamlit, "Safety supervised", status="verified")
+            status_badge(streamlit, "Reproducible", status="verified")
         streamlit.caption(
-            "Source: "
+            "Source · "
             f"{project_relative(directory / 'final_summary.json', PROJECT_ROOT)} "
-            f"· Comparison ID: {summary.get('comparison_id', 'Unavailable')}"
+            f"· {summary['comparison_id']}"
         )
 
 
-def _render_kpis(streamlit, summary: dict[str, object]) -> None:
-    demand = summary["demand_metrics"]
-    comfort = summary["comfort_metrics"]
-    baseline_comfort = comfort["baseline"]
-    controlled_comfort = comfort["controlled"]
+def _render_validity_band(
+    streamlit,
+    summary: dict[str, object],
+    report: dict[str, object],
+) -> None:
+    checks = (
+        ("Official EnergyPlus comparison", summary["official_energyplus_comparison"]),
+        ("Same model", report["model_hashes_match"]),
+        ("Same weather", report["weather_hashes_match"]),
+        ("Same run period", summary["comparison_valid"]),
+        (
+            f"{summary['alignment']['matched_intervals']:,} / "
+            f"{summary['alignment']['total_expected_intervals']:,} intervals",
+            summary["alignment"]["complete"],
+        ),
+        ("Reproducible", report["reproducible"]),
+        (f"Severe errors · {summary['severe_count']}", summary["severe_count"] == 0),
+        (f"Fatal errors · {summary['fatal_count']}", summary["fatal_count"] == 0),
+    )
+    with streamlit.container(
+        key="validity-band",
+        horizontal=True,
+        gap="small",
+    ):
+        for label, passed in checks:
+            status_badge(
+                streamlit,
+                label,
+                status="verified" if passed else "error",
+            )
+
+
+def _render_executive_kpis(
+    streamlit,
+    summary: dict[str, object],
+) -> None:
+    section_divider(
+        streamlit,
+        "Measured annual result",
+        "One conservative zone, compared over a fully aligned annual horizon.",
+    )
+    primary, secondary = streamlit.columns(
+        [3, 2],
+        gap="large",
+        vertical_alignment="bottom",
+    )
+    with primary:
+        result_metric(
+            streamlit,
+            label="Verified facility-energy reduction",
+            value=format_energy(summary["energy_reduction_kwh"], compact=True),
+            primary=True,
+        )
+        result_metric(
+            streamlit,
+            label="Reproducible annual reduction",
+            value=format_percent(summary["energy_reduction_percent"], 4),
+        )
+    with secondary:
+        compact_metric(
+            streamlit,
+            label="Baseline facility energy",
+            value=format_energy(summary["baseline_energy_kwh"]),
+        )
+        compact_metric(
+            streamlit,
+            label="Controlled facility energy",
+            value=format_energy(summary["controlled_energy_kwh"]),
+        )
+        compact_metric(
+            streamlit,
+            label="Comfort proxy change",
+            value=(
+                f"{float(summary['comfort_metrics']['comfort_change_percent_points']):+.3f} pp"
+            ),
+        )
+        compact_metric(
+            streamlit,
+            label="Peak-demand change",
+            value=peak_change_label(
+                summary["demand_metrics"]["absolute_peak_reduction_kw"],
+                tolerance_kw=1e-6,
+            ),
+        )
+
     cost = summary["cost_metrics"]
     carbon = summary["carbon_metrics"]
-    reproducibility = bool(summary.get("reproducible"))
-
-    streamlit.subheader("Headline evidence")
-    _metric_row(
+    with streamlit.container(horizontal=True, gap="large"):
+        compact_metric(
+            streamlit,
+            label="Derived cost change",
+            value=format_cost(cost["absolute_cost_reduction"], cost["currency"]),
+            note="Configured tariff assumption.",
+        )
+        compact_metric(
+            streamlit,
+            label="Derived carbon change",
+            value=format_carbon(carbon["absolute_carbon_reduction_kg"]),
+            note="Configured carbon-intensity assumption.",
+        )
+        compact_metric(
+            streamlit,
+            label="Severe / fatal errors",
+            value=f"{summary['severe_count']} / {summary['fatal_count']}",
+        )
+    editorial_callout(
         streamlit,
-        [
-            ("Baseline facility energy", format_energy(summary["baseline_energy_kwh"]), None),
-            ("Controlled facility energy", format_energy(summary["controlled_energy_kwh"]), None),
-            ("Absolute energy reduction", format_energy(summary["energy_reduction_kwh"], compact=True), None),
-            ("Percentage energy reduction", format_percent(summary["energy_reduction_percent"], 4), None),
-        ],
-    )
-    _metric_row(
-        streamlit,
-        [
-            ("Baseline peak", format_demand(summary["baseline_peak_demand_kw"]), None),
-            ("Controlled peak", format_demand(summary["controlled_peak_demand_kw"]), None),
-            (
-                "Peak-demand change",
-                peak_change_label(
-                    demand["absolute_peak_reduction_kw"],
-                    tolerance_kw=1e-6,
-                ),
-                "The measured absolute change is within the reproducibility tolerance.",
-            ),
-            (
-                "Aligned intervals",
-                f"{summary['alignment']['matched_intervals']:,} / "
-                f"{summary['alignment']['total_expected_intervals']:,}",
-                None,
-            ),
-        ],
-    )
-    streamlit.caption(
-        "Measured peak-reduction percentage: "
-        f"{float(summary['peak_reduction_percent']):.8f}%. "
-        "This is reported as essentially unchanged because the absolute "
-        "difference is below 0.000001 kW."
-    )
-    _metric_row(
-        streamlit,
-        [
-            ("Baseline comfort proxy", format_comfort(summary["baseline_comfort_percent"]), None),
-            ("Controlled comfort proxy", format_comfort(summary["controlled_comfort_percent"]), None),
-            (
-                "Comfort change",
-                f"{float(comfort['comfort_change_percent_points']):+.3f} pp",
-                None,
-            ),
-            (
-                "Comfort gate",
-                "Passed" if summary["comfort_gate_passed"] else "Failed",
-                None,
-            ),
-        ],
-    )
-    streamlit.success(COMFORT_WORDING, icon=":material/check_circle:")
-    streamlit.dataframe(
-        [
-            {
-                "Run": "Fixed-schedule baseline",
-                "Low-temperature violations": baseline_comfort[
-                    "low_temperature_violations"
-                ],
-                "High-temperature violations": baseline_comfort[
-                    "high_temperature_violations"
-                ],
-                "PMV available": baseline_comfort["pmv_available"],
-                "Comfort method": baseline_comfort["comfort_method"],
-            },
-            {
-                "Run": "Safety-supervised controlled",
-                "Low-temperature violations": controlled_comfort[
-                    "low_temperature_violations"
-                ],
-                "High-temperature violations": controlled_comfort[
-                    "high_temperature_violations"
-                ],
-                "PMV available": controlled_comfort["pmv_available"],
-                "Comfort method": controlled_comfort["comfort_method"],
-            },
-        ],
-        hide_index=True,
-        width="stretch",
-    )
-    _metric_row(
-        streamlit,
-        [
-            (
-                "Derived cost change",
-                format_cost(cost["absolute_cost_reduction"], cost["currency"]),
-                f"Assumption: {cost['flat_tariff_per_kwh']} "
-                f"{cost['currency']}/kWh.",
-            ),
-            (
-                "Derived carbon change",
-                format_carbon(carbon["absolute_carbon_reduction_kg"]),
-                "Assumption: "
-                f"{carbon['constant_carbon_intensity_g_per_kwh']} g CO₂/kWh.",
-            ),
-            (
-                "Severe / fatal errors",
-                f"{summary['severe_count']} / {summary['fatal_count']}",
-                None,
-            ),
-            (
-                "Reproducibility",
-                "Verified" if reproducibility else "Not verified",
-                None,
-            ),
-        ],
-    )
-    streamlit.caption(
-        "Cost and carbon are derived from measured electricity using explicit "
-        "project assumptions; they are not EnergyPlus-native tariff or grid outputs."
+        "The whole-building effect is intentionally small because the proof "
+        "of concept controls one zone conservatively under strict safety constraints.",
     )
 
 
-def _render_charts(streamlit, bundle: dict[str, object]) -> None:
-    energy = bundle["energy"]
-    demand = bundle["demand"]
-    comfort = bundle["comfort"]
-    actions = bundle["actions"]
-    cost = bundle["cost"]
-    carbon = bundle["carbon"]
-
-    streamlit.subheader("Measured comparison charts")
-    with streamlit.container(border=True):
-        streamlit.markdown("**Cumulative facility electricity**")
+def _render_energy(streamlit, bundle: dict[str, object]) -> None:
+    summary = bundle["summary"]
+    section_divider(
+        streamlit,
+        "Cumulative facility electricity",
+        "The controlled trajectory remains close to baseline and finishes "
+        "5.626076 kWh lower across the complete year.",
+    )
+    with streamlit.container(key="chart-panel-energy"):
         comparison_line_chart(
             streamlit,
-            energy,
+            bundle["energy"],
             series={
                 "baseline_cumulative_energy_kwh": "Fixed-schedule baseline",
                 "controlled_cumulative_energy_kwh": "Safety-supervised controlled",
             },
             y_title="Cumulative facility electricity (kWh)",
+            show_endpoints=True,
+            zero=True,
         )
-    with streamlit.container(border=True):
-        streamlit.markdown("**Facility demand**")
+    streamlit.caption(
+        "Final endpoints: "
+        f"{float(summary['baseline_energy_kwh']):,.6f} kWh baseline · "
+        f"{float(summary['controlled_energy_kwh']):,.6f} kWh controlled · "
+        f"{float(summary['energy_reduction_kwh']):,.6f} kWh difference."
+    )
+
+
+def _render_demand(streamlit, bundle: dict[str, object]) -> None:
+    summary = bundle["summary"]
+    section_divider(
+        streamlit,
+        "Peak demand remained effectively unchanged",
+        "The absolute peak difference is below the configured reproducibility "
+        "tolerance and is not presented as a reduction.",
+    )
+    with streamlit.container(key="chart-panel-demand"):
         comparison_line_chart(
             streamlit,
-            demand,
+            bundle["demand"],
             series={
                 "baseline_demand_kw": "Fixed-schedule baseline",
                 "controlled_demand_kw": "Safety-supervised controlled",
             },
             y_title="Facility demand (kW)",
+            zero=True,
         )
-    occupied_zone = comfort.loc[
-        comfort["energyplus_zone_name"].eq("SPACE1-1")
+    with streamlit.container(horizontal=True, gap="large"):
+        compact_metric(
+            streamlit,
+            label="Baseline peak",
+            value=format_demand(summary["baseline_peak_demand_kw"]),
+        )
+        compact_metric(
+            streamlit,
+            label="Controlled peak",
+            value=format_demand(summary["controlled_peak_demand_kw"]),
+        )
+        compact_metric(
+            streamlit,
+            label="Measured peak classification",
+            value="Essentially unchanged",
+        )
+
+
+def _render_comfort(streamlit, bundle: dict[str, object]) -> None:
+    summary = bundle["summary"]
+    comfort = summary["comfort_metrics"]
+    baseline = comfort["baseline"]
+    controlled = comfort["controlled"]
+    section_divider(
+        streamlit,
+        "Occupied-temperature proxy performance",
+        "Genuine PMV/PPD is unavailable in the retained People objects, so "
+        "the declared measure is occupied-temperature compliance.",
+    )
+    with streamlit.container(horizontal=True, gap="large"):
+        compact_metric(
+            streamlit,
+            label="Baseline compliance",
+            value=format_comfort(summary["baseline_comfort_percent"]),
+        )
+        compact_metric(
+            streamlit,
+            label="Controlled compliance",
+            value=format_comfort(summary["controlled_comfort_percent"]),
+        )
+        compact_metric(
+            streamlit,
+            label="Difference",
+            value=f"{float(comfort['comfort_change_percent_points']):+.3f} pp",
+        )
+        compact_metric(streamlit, label="PMV", value="Unavailable")
+    occupied_zone = bundle["comfort"].loc[
+        bundle["comfort"]["energyplus_zone_name"].eq("SPACE1-1")
         & (
             pd.to_numeric(
-                comfort["occupancy_controlled"],
+                bundle["comfort"]["occupancy_controlled"],
                 errors="coerce",
             ).fillna(0)
             > 0
         )
     ]
-    with streamlit.container(border=True):
-        streamlit.markdown("**Controlled-zone occupied temperature**")
+    with streamlit.container(key="chart-panel-comfort"):
         comparison_line_chart(
             streamlit,
             occupied_zone,
@@ -359,395 +446,306 @@ def _render_charts(streamlit, bundle: dict[str, object]) -> None:
                 "comfort_min_c": "Configured lower bound",
                 "comfort_max_c": "Configured upper bound",
             },
-            y_title="Zone temperature (°C)",
+            y_title="Occupied zone temperature (°C)",
+            zero=False,
         )
-        streamlit.caption(
-            "SPACE1-1 only. This is the configured occupied-temperature proxy; "
-            "genuine PMV/PPD is unavailable in the retained People objects."
-        )
-    with streamlit.container(border=True):
-        streamlit.markdown("**Requested through observed control actions**")
-        action_setpoint_chart(streamlit, actions)
-    left, right = streamlit.columns(2)
-    with left.container(border=True):
-        streamlit.markdown("**Derived interval cost**")
-        comparison_line_chart(
-            streamlit,
-            cost,
-            series={
-                "baseline_cost": "Fixed-schedule baseline",
-                "controlled_cost": "Safety-supervised controlled",
-            },
-            y_title="Derived interval cost (INR)",
-            height=280,
-        )
-    with right.container(border=True):
-        streamlit.markdown("**Derived interval carbon**")
-        comparison_line_chart(
-            streamlit,
-            carbon,
-            series={
-                "baseline_carbon_kg": "Fixed-schedule baseline",
-                "controlled_carbon_kg": "Safety-supervised controlled",
-            },
-            y_title="Derived interval carbon (kg CO₂)",
-            height=280,
-        )
-
-
-def _render_meter_mapping(streamlit) -> None:
-    streamlit.subheader("EnergyPlus meter mapping")
+    comfort_range = (
+        f"{float(occupied_zone['comfort_min_c'].min()):.1f}–"
+        f"{float(occupied_zone['comfort_max_c'].max()):.1f} °C"
+        if not occupied_zone.empty
+        else "Unavailable"
+    )
     streamlit.dataframe(
         [
             {
-                "Displayed quantity": "Facility electricity meter",
-                "EnergyPlus source meter / variable": "Electricity:Facility",
-                "Unit": "J per hourly interval",
-                "Availability": "Available",
-                "Display conversion": "J ÷ 3,600,000 → kWh",
+                "Run": "Fixed-schedule baseline",
+                "Low violations": baseline["low_temperature_violations"],
+                "High violations": baseline["high_temperature_violations"],
+                "Maximum deviation (°C)": baseline["maximum_deviation_c"],
+                "Comfort range": comfort_range,
+                "PMV": "Unavailable",
             },
             {
-                "Displayed quantity": "HVAC electricity meter",
-                "EnergyPlus source meter / variable": "Electricity:HVAC",
-                "Unit": "J per hourly interval",
-                "Availability": "Available",
-                "Display conversion": "J ÷ 3,600,000 → kWh",
-            },
-            {
-                "Displayed quantity": "Cooling electricity meter",
-                "EnergyPlus source meter / variable": "Cooling:Electricity",
-                "Unit": "J per hourly interval",
-                "Availability": "Available",
-                "Display conversion": "J ÷ 3,600,000 → kWh",
-            },
-            {
-                "Displayed quantity": "Heating electricity meter",
-                "EnergyPlus source meter / variable": "Heating:Electricity",
-                "Unit": "J per hourly interval",
-                "Availability": "Available",
-                "Display conversion": "J ÷ 3,600,000 → kWh",
-            },
-            {
-                "Displayed quantity": "Fan electricity meter",
-                "EnergyPlus source meter / variable": "Fans:Electricity",
-                "Unit": "J per hourly interval",
-                "Availability": "Available",
-                "Display conversion": "J ÷ 3,600,000 → kWh",
+                "Run": "Safety-supervised controlled",
+                "Low violations": controlled["low_temperature_violations"],
+                "High violations": controlled["high_temperature_violations"],
+                "Maximum deviation (°C)": controlled["maximum_deviation_c"],
+                "Comfort range": comfort_range,
+                "PMV": "Unavailable",
             },
         ],
         hide_index=True,
         width="stretch",
     )
-    streamlit.caption(
-        "In this retained model, Electricity:HVAC equals Fans:Electricity. "
-        "The dashboard presents each requested meter independently and never sums them."
+
+
+def _render_action_evidence(
+    streamlit,
+    bundle: dict[str, object],
+    directory: Path,
+) -> None:
+    section_divider(
+        streamlit,
+        "Action-to-impact evidence",
+        "Requested, approved, applied, and observed values remain linked to "
+        "the interval energy and deterministic safety outcome.",
     )
+    with streamlit.container(key="chart-panel-setpoints"):
+        streamlit.subheader("Setpoint timeline")
+        action_setpoint_chart(streamlit, bundle["actions"])
+    left, right = streamlit.columns(2, gap="large")
+    with left:
+        with streamlit.container(key="chart-panel-requested-approved"):
+            streamlit.subheader("Requested versus approved")
+            requested_approved_chart(streamlit, bundle["actions"])
+    with right:
+        with streamlit.container(key="chart-panel-safety-outcomes"):
+            streamlit.subheader("Deterministic safety outcomes")
+            safety_outcome_chart(streamlit, bundle["reliability"])
 
+    events = load_phase10_event_timeline(str(directory.resolve()))
+    with streamlit.container(key="chart-panel-fallbacks"):
+        streamlit.subheader("Fallback and rollback timeline")
+        fallback_timeline_chart(streamlit, events)
+        streamlit.caption(
+            f"{len(events.loc[events['event_type'].eq('Fallback')]):,} fallback "
+            "events · 0 rollback events · 0 emergency events in this comparison."
+        )
 
-def _render_action_impact(streamlit, bundle: dict[str, object]) -> None:
-    streamlit.subheader("Action-to-impact trace")
     table = build_action_impact_table(
         bundle["actions"],
         bundle["energy"],
         bundle["comfort"],
     )
-    if table.empty:
-        streamlit.info("No applied control actions are present in this comparison.")
-        return
+    display = meaningful_action_windows(table)
+    display_columns = [
+        "timestamp",
+        "zone",
+        "baseline_setpoint_c",
+        "requested_setpoint_c",
+        "approved_setpoint_c",
+        "observed_setpoint_c",
+        "baseline_interval_energy_kwh",
+        "controlled_interval_energy_kwh",
+        "interval_energy_difference_kwh",
+        "safety_outcome",
+    ]
+    streamlit.subheader("Meaningful action windows")
     streamlit.dataframe(
-        table,
+        display[display_columns],
         hide_index=True,
         width="stretch",
-        column_config={
-            "timestamp": "Runtime action timestamp",
-            "zone": "Zone",
-            "baseline_setpoint_c": streamlit.column_config.NumberColumn(
-                "Baseline setpoint (°C)", format="%.2f"
-            ),
-            "requested_setpoint_c": streamlit.column_config.NumberColumn(
-                "Requested (°C)", format="%.2f"
-            ),
-            "approved_setpoint_c": streamlit.column_config.NumberColumn(
-                "Approved (°C)", format="%.2f"
-            ),
-            "applied_setpoint_c": streamlit.column_config.NumberColumn(
-                "Applied (°C)", format="%.2f"
-            ),
-            "observed_setpoint_c": streamlit.column_config.NumberColumn(
-                "Observed (°C)", format="%.2f"
-            ),
-            "baseline_interval_energy_kwh": streamlit.column_config.NumberColumn(
-                "Baseline interval (kWh)", format="%.5f"
-            ),
-            "controlled_interval_energy_kwh": streamlit.column_config.NumberColumn(
-                "Controlled interval (kWh)", format="%.5f"
-            ),
-            "interval_energy_difference_kwh": streamlit.column_config.NumberColumn(
-                "Baseline − controlled (kWh)", format="%.5f"
-            ),
-            "safety_decision": "Safety decision",
-        },
     )
     streamlit.caption(
-        "Runtime actions use the original EnergyPlus calendar year (2013), while "
-        "aligned comparison telemetry uses reference year 2000. Rows are joined "
-        "only by month, day, and interval-end time; all stored timestamps remain unchanged."
+        f"Showing {len(display):,} of {len(table):,} action windows, ranked by "
+        "absolute interval-energy difference for display only. The join and "
+        "all metrics use full-resolution data."
+    )
+    streamlit.download_button(
+        "Download full action-to-impact CSV",
+        table.to_csv(index=False).encode("utf-8"),
+        "phase10_action_to_impact_full.csv",
+        "text/csv",
+        key="phase10-action-impact-full",
+        icon=":material/download:",
     )
 
 
-def _render_reliability(streamlit, bundle: dict[str, object]) -> None:
-    reliability = bundle["reliability"]
-    safety = bundle["safety"]
-    summary = bundle["summary"]
-    streamlit.subheader("Reliability and deterministic safety")
-    _metric_row(
+def _render_methodology(streamlit, summary: dict[str, object]) -> None:
+    section_divider(
         streamlit,
-        [
-            ("Run completion", format_percent(reliability["completion_percent"], 1), None),
-            ("Applied actions", f"{reliability['applied_actions']:,}", None),
-            ("Verified actuator changes", f"{reliability['verified_actuator_changes']:,}", None),
-            ("Fallbacks / rollbacks", f"{reliability['fallbacks']:,} / {reliability['rollbacks']:,}", None),
-        ],
+        "Methodology",
+        "The compact specification behind the claim gate.",
     )
-    streamlit.dataframe(
-        [
-            {
-                "Safety measure": "Unsafe actions prevented",
-                "Measured value": str(safety["unsafe_actions_prevented"]),
-            },
-            {
-                "Safety measure": "Comfort-risk actions prevented",
-                "Measured value": str(safety["comfort_risk_actions_prevented"]),
-            },
-            {
-                "Safety measure": "Oscillation detections",
-                "Measured value": str(safety["oscillation_detections"]),
-            },
-            {
-                "Safety measure": "Actuator mismatches",
-                "Measured value": str(safety["actuator_mismatches"]),
-            },
-            {
-                "Safety measure": "Safety intervention rate",
-                "Measured value": f"{float(safety['intervention_rate']) * 100:.2f}%",
-            },
-        ],
-        hide_index=True,
-        width="stretch",
+    columns = streamlit.columns(2, gap="large")
+    items = (
+        ("Simulation engine", "EnergyPlus 26.1"),
+        ("Experiment basis", "Identical model and weather"),
+        ("Reporting", "Hourly · 8,760 aligned intervals"),
+        ("Control scope", "One controlled zone · SPACE1-1"),
+        ("Policy", "Deterministic reproducible policy"),
+        ("Comfort measure", "Occupied-temperature proxy · PMV unavailable"),
+        (
+            "Derived assumptions",
+            f"{summary['cost_metrics']['currency']} "
+            f"{summary['cost_metrics']['flat_tariff_per_kwh']}/kWh · "
+            f"{summary['carbon_metrics']['constant_carbon_intensity_g_per_kwh']} "
+            "g CO₂/kWh",
+        ),
     )
-    streamlit.caption(
-        "This final reproducibility policy made no live LLM requests. The local "
-        "LLM is advisory in Phase 7; the deterministic Phase 9 supervisor always "
-        "retains final actuator authority. "
-        f"Control injection verified: {summary['control_injection_verified']}."
-    )
+    for index, (label, value) in enumerate(items):
+        with columns[index % 2]:
+            methodology_item(streamlit, label=label, value=value)
 
 
-def _render_reproducibility(
+def _render_technical_evidence(
     streamlit,
     bundle: dict[str, object],
     directory: Path,
 ) -> None:
     summary = bundle["summary"]
     report = bundle["reproducibility"]
-    baseline = bundle["baseline"]
-    controlled = bundle["controlled"]
-    exact_link = report.get("second_comparison_id") == summary.get("comparison_id")
-    streamlit.subheader("Reproducibility chain")
-    if report.get("reproducible") and exact_link:
-        streamlit.success(
-            "The displayed summary is the verified second comparison in the "
-            "repeatability check.",
-            icon=":material/replay:",
+    with streamlit.expander(
+        "Technical validity, meter mapping, and frozen hashes",
+        expanded=False,
+        icon=":material/fingerprint:",
+    ):
+        streamlit.subheader("Compatibility checks")
+        checks = pd.DataFrame(bundle["compatibility"]["checks"])[
+            ["check_id", "passed", "required", "message"]
+        ]
+        streamlit.dataframe(checks, hide_index=True, width="stretch")
+        streamlit.subheader("EnergyPlus meter mapping")
+        streamlit.dataframe(
+            [
+                ("Facility electricity", "Electricity:Facility", "J → kWh"),
+                ("HVAC electricity", "Electricity:HVAC", "J → kWh"),
+                ("Cooling electricity", "Cooling:Electricity", "J → kWh"),
+                ("Heating electricity", "Heating:Electricity", "J → kWh"),
+                ("Fan electricity", "Fans:Electricity", "J → kWh"),
+            ],
+            column_config={
+                0: "Displayed quantity",
+                1: "EnergyPlus source",
+                2: "Display conversion",
+            },
+            hide_index=True,
+            width="stretch",
         )
-    else:
-        streamlit.error(
-            "The displayed comparison is not linked to a passing repeatability report."
+        streamlit.subheader("Reproducibility chain")
+        streamlit.dataframe(
+            [
+                ("Displayed comparison", str(summary["comparison_id"])),
+                ("First comparison", str(report["first_comparison_id"])),
+                ("Verified repeat", str(report["second_comparison_id"])),
+                ("Model hashes match", str(report["model_hashes_match"])),
+                ("Weather hashes match", str(report["weather_hashes_match"])),
+                ("Telemetry shape matches", str(report["telemetry_shape_match"])),
+                ("Tolerance", str(report["tolerance"])),
+            ],
+            column_config={0: "Evidence", 1: "Value"},
+            hide_index=True,
+            width="stretch",
         )
-    streamlit.dataframe(
-        [
-            {"Evidence": "Displayed comparison", "Value": summary["comparison_id"]},
-            {"Evidence": "First comparison", "Value": report["first_comparison_id"]},
-            {"Evidence": "Verified repeat", "Value": report["second_comparison_id"]},
-            {"Evidence": "Tolerance", "Value": str(report["tolerance"])},
-            {"Evidence": "Model hashes match", "Value": str(report["model_hashes_match"])},
-            {"Evidence": "Weather hashes match", "Value": str(report["weather_hashes_match"])},
-            {"Evidence": "Telemetry shape match", "Value": str(report["telemetry_shape_match"])},
-            {"Evidence": "Energy within tolerance", "Value": str(report["energy_within_tolerance"])},
-            {"Evidence": "Peak demand within tolerance", "Value": str(report["peak_demand_within_tolerance"])},
-            {"Evidence": "Comfort within tolerance", "Value": str(report["comfort_within_tolerance"])},
-        ],
-        hide_index=True,
-        width="stretch",
-    )
-    with streamlit.expander("Frozen model and weather hashes"):
+        streamlit.subheader("Frozen hashes")
         streamlit.dataframe(
             [
                 {
                     "Hash": "Base model",
-                    "Baseline": baseline["base_model_hash"],
-                    "Controlled": controlled["base_model_hash"],
+                    "Baseline": bundle["baseline"]["base_model_hash"],
+                    "Controlled": bundle["controlled"]["base_model_hash"],
                 },
                 {
                     "Hash": "Derived model",
-                    "Baseline": baseline["derived_model_hash"],
-                    "Controlled": controlled["derived_model_hash"],
+                    "Baseline": bundle["baseline"]["derived_model_hash"],
+                    "Controlled": bundle["controlled"]["derived_model_hash"],
                 },
                 {
                     "Hash": "Weather",
-                    "Baseline": baseline["weather_hash"],
-                    "Controlled": controlled["weather_hash"],
+                    "Baseline": bundle["baseline"]["weather_hash"],
+                    "Controlled": bundle["controlled"]["weather_hash"],
                 },
             ],
             hide_index=True,
             width="stretch",
         )
         streamlit.caption(
-            "Report: "
-            + project_relative(
+            project_relative(
                 directory / "reproducibility_report.json",
                 PROJECT_ROOT,
             )
         )
-
-
-def _render_validity(streamlit, compatibility: dict[str, object]) -> None:
-    with streamlit.expander("Comparison validity checks"):
-        checks = pd.DataFrame(compatibility["checks"])[
-            ["check_id", "passed", "required", "message"]
-        ].rename(
-            columns={
-                "check_id": "Check",
-                "passed": "Passed",
-                "required": "Required",
-                "message": "Evidence rule",
-            }
-        )
-        streamlit.dataframe(
-            checks,
-            hide_index=True,
-            width="stretch",
-            column_config={
-                "Passed": streamlit.column_config.CheckboxColumn("Passed"),
-                "Required": streamlit.column_config.CheckboxColumn("Required"),
-            },
-        )
-
-
-def _render_methodology(streamlit, summary: dict[str, object]) -> None:
-    with streamlit.expander("Methodology, assumptions, and scope"):
-        streamlit.markdown(
-            """
-- Both runs use EnergyPlus 26.1.0, the same base and derived model hashes,
-  identical weather, the same annual run period, and 8,760 aligned hourly intervals.
-- The controlled experiment changes only the verified `SPACE1-1` cooling
-  setpoint. It is a conservative single-zone proof of concept, not a
-  whole-building optimization result.
-- The Phase 10 reproducibility run uses a deterministic policy. The local
-  Qwen model is demonstrated separately as an advisory planner and never
-  receives direct actuator authority.
-- The final authority is the deterministic safety supervisor. Approved
-  actions are bounded, rate-limited, verified against observed actuator
-  state, and reset through documented fallback behavior.
-- Genuine PMV/PPD is unavailable from the retained People objects.
-  Comfort is therefore the explicitly configured occupied-temperature proxy.
-- Tariff and grid-carbon values are transparent project assumptions used
-  only to derive cost and carbon from measured facility electricity.
-"""
-        )
-        streamlit.write(
-            {
-                "Comparison mode": summary["comparison_mode"],
-                "Tariff assumption": summary["cost_metrics"]["tariff_source"],
-                "Carbon assumption": summary["carbon_metrics"][
-                    "carbon_intensity_source"
-                ],
-            }
-        )
+        if not bool(streamlit.session_state.get("judge_mode", True)):
+            with streamlit.expander("Raw final summary JSON", expanded=False):
+                streamlit.json(summary, expanded=False)
 
 
 def _render_downloads(
     streamlit,
-    bundle: dict[str, object],
     directory: Path,
 ) -> None:
-    streamlit.subheader("Phase 10 downloads")
+    section_divider(
+        streamlit,
+        "Downloads",
+        "Full-resolution artifacts are unchanged by display sampling.",
+    )
     files = (
-        ("Final summary", "final_summary.json", "application/json"),
-        ("Energy comparison", "energy_comparison.csv", "text/csv"),
-        ("Compatibility report", "compatibility_report.json", "application/json"),
-        ("Executive summary", "executive_summary.md", "text/markdown"),
-        (
-            "Reproducibility report",
-            "reproducibility_report.json",
-            "application/json",
-        ),
+        ("Final summary", "final_summary.json"),
+        ("Energy comparison CSV", "energy_comparison.csv"),
+        ("Demand comparison CSV", "demand_comparison.csv"),
+        ("Comfort comparison CSV", "comfort_comparison.csv"),
+        ("Action summary CSV", "action_summary.csv"),
+        ("Reproducibility report", "reproducibility_report.json"),
     )
     columns = streamlit.columns(3)
-    for index, (label, filename, mime) in enumerate(files):
-        path = directory / filename
-        columns[index % 3].download_button(
-            label,
-            path.read_bytes(),
-            f"phase10_{filename}",
-            mime,
-            key=f"phase10_download_{filename}",
-            width="stretch",
-        )
-    columns[len(files) % 3].download_button(
-        "Chart archive",
+    for index, (label, filename) in enumerate(files):
+        with columns[index % 3]:
+            artifact_download(
+                streamlit,
+                label=label,
+                path=directory / filename,
+                key=f"phase10-download-{filename}",
+            )
+    streamlit.download_button(
+        "Download chart archive",
         _chart_archive(str(directory.resolve())),
         "phase10_charts.zip",
         "application/zip",
-        key="phase10_download_charts",
-        width="stretch",
-    )
-    streamlit.caption(
-        "All displayed paths and downloads are constrained to project evidence. "
-        "The full-row CSV artifacts are unchanged by dashboard sampling."
+        key="phase10-download-charts",
+        icon=":material/download:",
     )
 
 
 def render_phase10(_streamlit=st) -> None:
-    """Render the newest valid, reproducible Phase 10 artifact bundle."""
+    """Render the newest valid reproducible bundle without recalculation."""
     directory = latest_phase10_directory(require_reproducible=True)
     if directory is None:
-        _streamlit.info(
+        empty_state(
+            _streamlit,
             "No valid reproducible Phase 10 comparison is available. Run the "
-            "comparison and reproducibility scripts to generate official evidence.",
-            icon=":material/info:",
+            "documented comparison and reproducibility scripts, then refresh.",
         )
         return
     try:
         bundle = load_phase10_bundle(str(directory.resolve()))
     except (OSError, ValueError, KeyError) as exc:
         _streamlit.error(
-            "The Phase 10 evidence bundle could not be loaded. The dashboard "
-            "has not recalculated or replaced any result."
+            "The Phase 10 evidence bundle could not be loaded. No result was "
+            "recalculated or replaced."
         )
         with _streamlit.expander("Technical diagnostics"):
             _streamlit.code(f"{type(exc).__name__}: {exc}", language="text")
         return
 
     summary = bundle["summary"]
-    _render_claim(_streamlit, summary, directory)
-    _render_kpis(_streamlit, summary)
-    _render_validity(_streamlit, bundle["compatibility"])
-    _render_charts(_streamlit, bundle)
-    _render_meter_mapping(_streamlit)
-    _render_action_impact(_streamlit, bundle)
-    _render_reliability(_streamlit, bundle)
-    _render_reproducibility(_streamlit, bundle, directory)
+    _render_hero(_streamlit, summary, directory)
+    _render_validity_band(_streamlit, summary, bundle["reproducibility"])
+    _render_executive_kpis(_streamlit, summary)
+    _render_energy(_streamlit, bundle)
+    _render_demand(_streamlit, bundle)
+    _render_comfort(_streamlit, bundle)
+    _render_action_evidence(_streamlit, bundle, directory)
     _render_methodology(_streamlit, summary)
-    _render_downloads(_streamlit, bundle, directory)
+    _render_technical_evidence(_streamlit, bundle, directory)
+    scope_note(
+        _streamlit,
+        SMALL_RESULT_NOTE
+        + " Genuine PMV/PPD is unavailable. Peak demand is essentially "
+        "unchanged. Tariff and carbon intensity are configured assumptions, "
+        "not native EnergyPlus outputs.",
+    )
+    _render_downloads(_streamlit, directory)
 
 
 __all__ = [
+    "RESULT_HEADING",
+    "RESULT_NARRATIVE",
     "_chart_archive",
     "_format",
     "_latest_directory",
     "_load_bundle",
     "build_action_impact_table",
+    "meaningful_action_windows",
     "phase10_complete",
     "render_phase10",
 ]

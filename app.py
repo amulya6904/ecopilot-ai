@@ -29,6 +29,8 @@ from ui.constants import PROJECT_SUBTITLE, PROJECT_TITLE
 from ui.navigation import build_navigation
 from ui.artifact_views import PROJECT_ROOT
 from ui.formatting import project_relative
+from ui.shell import LOGO_PATH, initialize_shell_state, render_sidebar
+from ui.theme import apply_theme
 
 
 def _range_text(minimum: float, maximum: float) -> str:
@@ -261,7 +263,8 @@ def render_phase2() -> None:
     status_columns[2].metric("Official evaluation backend", "EnergyPlus required")
     heat_wave = st.checkbox("Heat Wave Scenario", value=False)
     scenario_key = f"phase2_frame_{heat_wave}"
-    if st.button("Run Full-Day Simulation", type="primary"):
+    st.caption("Expected duration: under 10 seconds on typical hardware.")
+    if st.button("Run Development Simulator", type="primary"):
         with st.spinner("Running Phase 2 validation run..."):
             st.session_state[scenario_key] = BuildingSimulator(
                 random_seed=42, heat_wave=heat_wave
@@ -330,7 +333,8 @@ def render_phase3() -> None:
         "Random seed", min_value=0, value=42, step=1, key="phase3_seed"
     ))
     scenario_key = f"phase3_results_{seed}_{heat_wave}"
-    if st.button("Run Baseline Simulation", type="primary"):
+    st.caption("Expected duration: under 10 seconds on typical hardware.")
+    if st.button("Run Development Baseline", type="primary"):
         with st.spinner("Running fixed-schedule baseline..."):
             results = run_baseline_day(
                 BuildingSimulator(random_seed=seed, heat_wave=heat_wave),
@@ -494,8 +498,9 @@ def render_phase4() -> None:
             "workspace are ready. Run the first real EnergyPlus simulation to "
             "complete Phase 4 validation."
         )
+    st.caption("Expected duration: approximately 1–2 minutes.")
     if st.button(
-        "Run EnergyPlus Simulation",
+        "Run EnergyPlus Integration Validation",
         type="primary",
         disabled=not status.ready_for_run,
         key="phase4_run",
@@ -636,19 +641,11 @@ def main() -> None:
         layout="wide",
         initial_sidebar_state="expanded",
     )
-    st.session_state.setdefault("judge_mode", False)
+    initialize_shell_state(st)
+    apply_theme(st)
+    st.logo(str(LOGO_PATH), size="large", icon_image=str(LOGO_PATH))
+    render_sidebar(st)
     page = build_navigation(st)
-    with st.sidebar:
-        st.divider()
-        st.toggle(
-            "Judge mode",
-            key="judge_mode",
-            help=(
-                "Show concise summaries for Phases 1–9. Phase 10 remains fully "
-                "expanded because it contains the final evidence."
-            ),
-        )
-        st.caption("Offline · local evidence · no automatic simulation runs")
     page.run()
 
 
