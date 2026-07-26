@@ -12,8 +12,7 @@ The ZIP contains:
 3. Quantitative results, comparison exports, and reproducibility evidence
 4. System architecture documentation
 5. EcoPilot AI PoC demonstration video
-6.
-7.
+
    # EcoPilot AI
 
 > A local, safety-supervised physical-AI loop that turns official EnergyPlus
