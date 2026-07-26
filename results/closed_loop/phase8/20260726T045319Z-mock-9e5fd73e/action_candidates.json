@@ -1,0 +1,78 @@
+[
+  {
+    "action_id": "action-2bfe13669e554754afe4fcd097f7dfc1",
+    "source_proposal_id": null,
+    "source_type": "mock_agent",
+    "zone_name": "SPACE1-1",
+    "actuator_identifier": "Zone Temperature Control|Cooling Setpoint|SPACE1-1",
+    "current_value_c": 22.0,
+    "requested_value_c": 22.0,
+    "requested_delta_c": 0.0,
+    "effective_from": "2013-01-01T09:15:00Z",
+    "effective_until": "2013-01-01T10:15:00Z",
+    "evidence_references": [
+      "EnergyPlusRuntime:live_telemetry"
+    ],
+    "created_at": "2013-01-01T09:15:00Z",
+    "expires_at": "2013-01-01T10:45:00Z",
+    "phase7_validated": null,
+    "confidence": null
+  },
+  {
+    "action_id": "action-07300b4112d74f2eaba1784537b33905",
+    "source_proposal_id": null,
+    "source_type": "mock_agent",
+    "zone_name": "SPACE1-1",
+    "actuator_identifier": "Zone Temperature Control|Cooling Setpoint|SPACE1-1",
+    "current_value_c": 22.0,
+    "requested_value_c": 23.0,
+    "requested_delta_c": 1.0,
+    "effective_from": "2013-01-01T10:00:00Z",
+    "effective_until": "2013-01-01T11:00:00Z",
+    "evidence_references": [
+      "EnergyPlusRuntime:live_telemetry"
+    ],
+    "created_at": "2013-01-01T10:00:00Z",
+    "expires_at": "2013-01-01T11:30:00Z",
+    "phase7_validated": null,
+    "confidence": null
+  },
+  {
+    "action_id": "action-f0f5a90baf104c61b4a799005badf8d7",
+    "source_proposal_id": null,
+    "source_type": "mock_agent",
+    "zone_name": "SPACE1-1",
+    "actuator_identifier": "Zone Temperature Control|Cooling Setpoint|SPACE1-1",
+    "current_value_c": 23.0,
+    "requested_value_c": 23.0,
+    "requested_delta_c": 0.0,
+    "effective_from": "2013-01-01T11:00:00Z",
+    "effective_until": "2013-01-01T12:00:00Z",
+    "evidence_references": [
+      "EnergyPlusRuntime:live_telemetry"
+    ],
+    "created_at": "2013-01-01T11:00:00Z",
+    "expires_at": "2013-01-01T12:30:00Z",
+    "phase7_validated": null,
+    "confidence": null
+  },
+  {
+    "action_id": "action-8b22599876f94edfa6b367ed03943155",
+    "source_proposal_id": null,
+    "source_type": "mock_agent",
+    "zone_name": "SPACE1-1",
+    "actuator_identifier": "Zone Temperature Control|Cooling Setpoint|SPACE1-1",
+    "current_value_c": 22.0,
+    "requested_value_c": 27.0,
+    "requested_delta_c": 5.0,
+    "effective_from": "2013-01-01T13:00:00Z",
+    "effective_until": "2013-01-01T14:00:00Z",
+    "evidence_references": [
+      "EnergyPlusRuntime:live_telemetry"
+    ],
+    "created_at": "2013-01-01T13:00:00Z",
+    "expires_at": "2013-01-01T14:30:00Z",
+    "phase7_validated": null,
+    "confidence": null
+  }
+]

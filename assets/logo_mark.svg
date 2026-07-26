@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="48" viewBox="0 0 220 48" role="img" aria-labelledby="title desc">
+  <title id="title">EcoPilot AI</title>
+  <desc id="desc">Original building grid and closed-loop mark beside the EcoPilot AI wordmark.</desc>
+  <rect width="48" height="48" fill="#171714"/>
+  <path d="M12 33V15h18v18M18 15v18M24 15v18M30 15v18M12 21h18M12 27h18" fill="none" stroke="#F5F2EB" stroke-width="1.4"/>
+  <path d="M35 13a15 15 0 1 1-6-3.8" fill="none" stroke="#F5F2EB" stroke-width="1.4"/>
+  <path d="M34 8v7h-7" fill="none" stroke="#F5F2EB" stroke-width="1.4"/>
+  <text x="62" y="29" fill="#171714" font-family="Helvetica Neue, Segoe UI, Arial, sans-serif" font-size="21" letter-spacing="-0.6">EcoPilot AI</text>
+</svg>

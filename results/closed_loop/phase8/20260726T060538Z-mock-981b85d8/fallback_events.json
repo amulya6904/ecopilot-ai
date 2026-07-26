@@ -1,0 +1,26 @@
+[
+  {
+    "fallback_id": "fallback-f924f74865ce42d2906e4a6d3e75f024",
+    "reason_code": "COMFORT_RISK",
+    "original_action_id": "action-cd72f98988fd4438bb5822630582fce5",
+    "fallback_value_c": 22.0,
+    "actuator_reset": true,
+    "simulation_timestamp": "2013-01-01T10:00:00Z"
+  },
+  {
+    "fallback_id": "fallback-d2653add125746cc8f568737f66bdbe2",
+    "reason_code": "MANUAL_RESET",
+    "original_action_id": "action-269a077538aa4cf48115d0964f004f76",
+    "fallback_value_c": 22.0,
+    "actuator_reset": true,
+    "simulation_timestamp": "2013-01-01T12:00:00Z"
+  },
+  {
+    "fallback_id": "fallback-2a1bc87c76b14bc69202eec6cf741348",
+    "reason_code": "VALIDATION_REJECTED",
+    "original_action_id": "action-84f40bbc4e694068ac31bc29f54b9a25",
+    "fallback_value_c": 22.0,
+    "actuator_reset": true,
+    "simulation_timestamp": "2013-01-01T13:00:00Z"
+  }
+]

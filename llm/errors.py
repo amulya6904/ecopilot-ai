@@ -1,0 +1,33 @@
+"""Stable Phase 7 error model."""
+
+from enum import StrEnum
+
+
+class AgentErrorCode(StrEnum):
+    OLLAMA_UNAVAILABLE = "OLLAMA_UNAVAILABLE"
+    MODEL_NOT_INSTALLED = "MODEL_NOT_INSTALLED"
+    LLM_TIMEOUT = "LLM_TIMEOUT"
+    AGENT_RUN_TIMEOUT = "AGENT_RUN_TIMEOUT"
+    LLM_INVALID_RESPONSE = "LLM_INVALID_RESPONSE"
+    MCP_UNAVAILABLE = "MCP_UNAVAILABLE"
+    MCP_REQUIRED_TOOL_MISSING = "MCP_REQUIRED_TOOL_MISSING"
+    MCP_EVIDENCE_RETRIEVAL_FAILED = "MCP_EVIDENCE_RETRIEVAL_FAILED"
+    MCP_EVIDENCE_INCOMPLETE = "MCP_EVIDENCE_INCOMPLETE"
+    TOOL_NOT_ALLOWED = "TOOL_NOT_ALLOWED"
+    TOOL_ARGUMENT_INVALID = "TOOL_ARGUMENT_INVALID"
+    TOOL_CALL_FAILED = "TOOL_CALL_FAILED"
+    MAX_TOOL_ROUNDS = "MAX_TOOL_ROUNDS"
+    MAX_RETRIES = "MAX_RETRIES"
+    CONTEXT_TOO_LARGE = "CONTEXT_TOO_LARGE"
+    PROPOSAL_INVALID = "PROPOSAL_INVALID"
+    INTERNAL_ERROR = "INTERNAL_ERROR"
+
+
+class AgentError(Exception):
+    def __init__(self, code: AgentErrorCode, message: str):
+        super().__init__(message)
+        self.code = code
+        self.public_message = message
+
+
+__all__ = ["AgentError", "AgentErrorCode"]

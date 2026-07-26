@@ -1,0 +1,217 @@
+{
+  "manifest_version": 1,
+  "classification": "phase11_submission_reference_manifest",
+  "created_at": "2026-07-26T09:54:17.872562+00:00",
+  "comparison_id": "20260726T095346Z-phase10-comparison-fefa0655",
+  "scope": "References compact source and evidence files without duplicating large raw EnergyPlus telemetry.",
+  "preserved_result": {
+    "baseline_energy_kwh": 58568.21190808615,
+    "controlled_energy_kwh": 58562.58583227383,
+    "energy_reduction_kwh": 5.626075812324416,
+    "energy_reduction_percent": 0.009606022839067856,
+    "comfort_change_percentage_points": 0.16718913270637614,
+    "peak_demand_interpretation": "essentially_unchanged",
+    "severe_count": 0,
+    "fatal_count": 0
+  },
+  "items": [
+    {
+      "file": "README.md",
+      "purpose": "Project overview, setup, measured result, scope, and evidence guide",
+      "source_phase": "Phase 11",
+      "classification": "submission_document",
+      "required": true,
+      "recommended_upload_format": "Markdown / repository landing page",
+      "exists": true,
+      "bytes": 13575,
+      "sha256": "74fbc4caf48e940b62aa9a268c693c203f99f42a56db4184eae10457e2687292"
+    },
+    {
+      "file": "requirements.txt",
+      "purpose": "Pinned project dependency entry point",
+      "source_phase": "Phase 1\u201311",
+      "classification": "source_dependency_manifest",
+      "required": true,
+      "recommended_upload_format": "Text",
+      "exists": true,
+      "bytes": 103,
+      "sha256": "a89a0693daec38bde092489550d613c0ca8aab5c77b2def381d07a88db0345aa"
+    },
+    {
+      "file": "app.py",
+      "purpose": "Offline Streamlit dashboard entry point",
+      "source_phase": "Phase 11",
+      "classification": "source_code",
+      "required": true,
+      "recommended_upload_format": "Repository source",
+      "exists": true,
+      "bytes": 27730,
+      "sha256": "fdd6ebf923ff738dd3f38a95af6ba2b4378dca0a62b4dbe517833f869be7f0d7"
+    },
+    {
+      "file": "energyplus/models/baseline/phase5_baseline.idf",
+      "purpose": "Official fixed-schedule EnergyPlus baseline model",
+      "source_phase": "Phase 5",
+      "classification": "official_energyplus_baseline_model",
+      "required": true,
+      "recommended_upload_format": "IDF",
+      "exists": true,
+      "bytes": 171593,
+      "sha256": "7523c515744efa4310bd40f403ebb270d649a3599ba99aa0e675e31f697b9dad"
+    },
+    {
+      "file": "energyplus/models/modified/phase4_telemetry_model.idf",
+      "purpose": "Derived telemetry/runtime EnergyPlus model",
+      "source_phase": "Phase 4\u20138",
+      "classification": "energyplus_runtime_model",
+      "required": true,
+      "recommended_upload_format": "IDF",
+      "exists": true,
+      "bytes": 170344,
+      "sha256": "5467be2c8504b32512b81320bd8500c91cecd566ec3ab9684006c18fc7229a50"
+    },
+    {
+      "file": "results/official/phase5_energyplus_baseline_manifest.json",
+      "purpose": "Frozen baseline model, weather, source, and output evidence",
+      "source_phase": "Phase 5",
+      "classification": "official_energyplus_baseline_manifest",
+      "required": true,
+      "recommended_upload_format": "JSON",
+      "exists": true,
+      "bytes": 8446,
+      "sha256": "261ec67fe9de2a090c7a112e54bfa85e318646a5ead7524ee2f606fcea73b7bf"
+    },
+    {
+      "file": "docs/SYSTEM_ARCHITECTURE.md",
+      "purpose": "Required architecture report and trust boundaries",
+      "source_phase": "Phase 11",
+      "classification": "submission_document",
+      "required": true,
+      "recommended_upload_format": "Markdown and optional PDF",
+      "exists": true,
+      "bytes": 11360,
+      "sha256": "62c3762440bd50df8dc24460e0c0c62b02dde9e9cd5888ee03cf5c5d78b370f8"
+    },
+    {
+      "file": "docs/LLM_AGENT.md",
+      "purpose": "Local model, prompt, tool, timeout, and fallback design",
+      "source_phase": "Phase 7 / 11",
+      "classification": "submission_document",
+      "required": true,
+      "recommended_upload_format": "Markdown and optional PDF",
+      "exists": true,
+      "bytes": 5571,
+      "sha256": "d98f77cda2db7844c36870d61533df7f5538f02c68bc517e81ad5bcf5d266f2a"
+    },
+    {
+      "file": "docs/FINAL_RESULTS.md",
+      "purpose": "Exact result interpretation and contextual assumptions",
+      "source_phase": "Phase 10 / 11",
+      "classification": "submission_document",
+      "required": true,
+      "recommended_upload_format": "Markdown and optional PDF",
+      "exists": true,
+      "bytes": 3675,
+      "sha256": "ee0358612fda4b76fbcbc6d338c4f616865be0ee4d4b3fdf1fbba672640dd633"
+    },
+    {
+      "file": "docs/DEMO_SCRIPT.md",
+      "purpose": "Three-minute judge demo script and backup flow",
+      "source_phase": "Phase 11",
+      "classification": "submission_document",
+      "required": true,
+      "recommended_upload_format": "Markdown",
+      "exists": true,
+      "bytes": 4619,
+      "sha256": "9e0068d6ef16ddb2891af3148aa97cec9967e5e0dd46f4e325d484338e6c98c1"
+    },
+    {
+      "file": "docs/PRESENTATION_OUTLINE.md",
+      "purpose": "Fourteen-slide presentation content",
+      "source_phase": "Phase 11",
+      "classification": "submission_document",
+      "required": true,
+      "recommended_upload_format": "Markdown; convert to PPTX/PDF manually",
+      "exists": true,
+      "bytes": 5892,
+      "sha256": "3934c6697ea6b9d79b82dfa9bb52481052581435aaea2a6451bc0139967d9ea5"
+    },
+    {
+      "file": "docs/SUBMISSION_CHECKLIST.md",
+      "purpose": "Final human and automated packaging checks",
+      "source_phase": "Phase 11",
+      "classification": "submission_document",
+      "required": true,
+      "recommended_upload_format": "Markdown",
+      "exists": true,
+      "bytes": 5004,
+      "sha256": "70836480680759619ebde61928dc3503351a0af0c6140accc17a3ae301d62d11"
+    },
+    {
+      "file": "results/comparison/phase10/20260726T095346Z-phase10-comparison-fefa0655/final_summary.json",
+      "purpose": "Exact official comparison result and claim gate",
+      "source_phase": "Phase 10",
+      "classification": "official_energyplus_quantitative_comparison",
+      "required": true,
+      "recommended_upload_format": "JSON",
+      "exists": true,
+      "bytes": 7104,
+      "sha256": "3cddbfa01e8f016f045d0153d6a8230723bb5f1720b08cd83c56451f79ca0465"
+    },
+    {
+      "file": "results/comparison/phase10/20260726T095346Z-phase10-comparison-fefa0655/comparison_manifest.json",
+      "purpose": "Comparison file hashes and provenance",
+      "source_phase": "Phase 10",
+      "classification": "official_energyplus_comparison_manifest",
+      "required": true,
+      "recommended_upload_format": "JSON",
+      "exists": true,
+      "bytes": 3982,
+      "sha256": "819d6517ccda55eef4b1ec5eeb251f2c17c31636f459fb5b183ede20fe52b8cf"
+    },
+    {
+      "file": "results/comparison/phase10/20260726T095346Z-phase10-comparison-fefa0655/reproducibility_report.json",
+      "purpose": "Repeatability relationship for the displayed comparison",
+      "source_phase": "Phase 10",
+      "classification": "deterministic_reproducibility",
+      "required": true,
+      "recommended_upload_format": "JSON",
+      "exists": true,
+      "bytes": 542,
+      "sha256": "a0545ab1153c07ca4c0f81fca9640ec894c885f7d13f4e77380707b9a24611bc"
+    },
+    {
+      "file": "results/comparison/phase10/20260726T095346Z-phase10-comparison-fefa0655/submission_export-20260726T095357Z/submission_export_manifest.json",
+      "purpose": "Compact judge-facing comparison export; raw annual telemetry omitted",
+      "source_phase": "Phase 10",
+      "classification": "submission_export",
+      "required": true,
+      "recommended_upload_format": "ZIP when available; otherwise Markdown",
+      "exists": true,
+      "bytes": 1975,
+      "sha256": "27067fcb213bc13d0ee9abb79e562eb69659f7f374e9865b06675e736f61b5e8"
+    },
+    {
+      "file": "results/safety/phase9/20260726T095238Z-phase10-reproducible_policy-c610f70b/run_metadata.json",
+      "purpose": "Latest Phase 9 safety-validation run metadata",
+      "source_phase": "Phase 9",
+      "classification": "safety_supervised_energyplus_runtime_validation",
+      "required": true,
+      "recommended_upload_format": "JSON",
+      "exists": true,
+      "bytes": 379,
+      "sha256": "65d4e1391f23da2efceff9ffbbf075fd2dcf3183eb6e941285a84671d298df67"
+    },
+    {
+      "file": "results/agent/phase7/20260726T095104Z-705dd78b/run_metadata.json",
+      "purpose": "Latest local qwen3:4b advisory run evidence",
+      "source_phase": "Phase 7",
+      "classification": "llm_advisory_proposal",
+      "required": true,
+      "recommended_upload_format": "JSON",
+      "exists": true,
+      "bytes": 961,
+      "sha256": "44f61de37241010973a47d9dc64d15e2a3d08079004f24fc0c06adfbbc94ce65"
+    }
+  ]
+}

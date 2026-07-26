@@ -1,0 +1,89 @@
+Version,26.1;
+Timestep,4;
+RunPeriod,Annual,1,1,,12,31,,Monday,Yes,Yes,No,Yes,Yes;
+ScheduleTypeLimits,Temperature,-60,200,Continuous,Temperature;
+ScheduleTypeLimits,Fraction,0,1,Continuous;
+Schedule:Compact,
+  OCCUPY-1,
+  Fraction,
+  Through: 12/31,
+  For: AllDays,
+  Until: 09:00,0,
+  Until: 18:00,1,
+  Until: 24:00,0;
+Schedule:Ruleset,
+  UNUSED-RULESET,
+  ,
+  UNUSED-DAY;
+Schedule:Constant,
+  ALWAYS-ON,
+  Fraction,
+  1;
+Schedule:Compact,
+  OLD-HEATING,
+  Temperature,
+  Through: 12/31,
+  For: AllDays,
+  Until: 24:00,20;
+Schedule:Compact,
+  OLD-COOLING,
+  Temperature,
+  Through: 12/31,
+  For: AllDays,
+  Until: 24:00,24;
+Zone,SPACE1-1,0,0,0,0,1,1,3,100;
+Zone,PLENUM-1,0,0,0,0,1,1,1,30;
+BuildingSurface:Detailed,
+  WALL-1,
+  Wall,
+  WALL-CONSTRUCTION,
+  SPACE1-1,
+  ,
+  Outdoors,
+  ,
+  SunExposed,
+  WindExposed,
+  ,
+  4,
+  0,0,3,
+  0,0,0,
+  5,0,0,
+  5,0,3;
+People,
+  SPACE1-1 People,
+  SPACE1-1,
+  OCCUPY-1,
+  People,
+  10,
+  ,
+  ,
+  0.3,
+  ,
+  ALWAYS-ON;
+Lights,
+  SPACE1-1 Lights,
+  SPACE1-1,
+  OCCUPY-1,
+  LightingLevel,
+  500;
+ElectricEquipment,
+  SPACE1-1 Equipment,
+  SPACE1-1,
+  OCCUPY-1,
+  EquipmentLevel,
+  400;
+ZoneControl:Thermostat,
+  SPACE1-1 Control,
+  SPACE1-1,
+  CONTROL-TYPE,
+  ThermostatSetpoint:SingleCooling,
+  CoolingSetpoint,
+  ThermostatSetpoint:SingleHeating,
+  HeatingSetpoint,
+  ThermostatSetpoint:DualSetpoint,
+  DualSetpoint;
+ThermostatSetpoint:SingleCooling,CoolingSetpoint,OLD-COOLING;
+ThermostatSetpoint:SingleHeating,HeatingSetpoint,OLD-HEATING;
+ThermostatSetpoint:DualSetpoint,DualSetpoint,OLD-HEATING,OLD-COOLING;
+Output:Variable,*,Zone Mean Air Temperature,Hourly;
+Output:Meter,Electricity:Facility,Hourly;

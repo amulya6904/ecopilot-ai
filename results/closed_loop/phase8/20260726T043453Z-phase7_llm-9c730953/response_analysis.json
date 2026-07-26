@@ -1,0 +1,10 @@
+{
+  "observations": [
+    {
+      "simulation_timestamp": "2013-01-01T00:15:00+00:00",
+      "observed_setpoint_c": 27.0,
+      "active_action_id": null,
+      "reset_active": true
+    }
+  ]
+}

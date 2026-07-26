@@ -1,0 +1,10 @@
+[
+  {
+    "fallback_id": "fallback-b3ec02bffa114a819f2141ec625f105b",
+    "reason_code": "VALIDATION_REJECTED",
+    "original_action_id": "action-48bed011759446b9a0aa70df5ee2cae7",
+    "fallback_value_c": 27.0,
+    "actuator_reset": true,
+    "simulation_timestamp": "2013-01-01T00:15:00Z"
+  }
+]

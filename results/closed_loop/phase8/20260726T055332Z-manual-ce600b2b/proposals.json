@@ -1,0 +1,10 @@
+[
+  {
+    "source": "manual",
+    "requested_setpoint_c": 23.0
+  },
+  {
+    "source": "manual",
+    "action": "reset_actuator"
+  }
+]

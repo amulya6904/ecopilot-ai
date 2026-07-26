@@ -1,0 +1,14 @@
+action_id,actuator_handle,application_success,applied_value,approved_value,observed_setpoint_after_application,requested_value,reset_performed,simulation_timestamp,source_type,validation_id,verified
+action-8e6499836cd4476eae2c2da86f851a0d,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:15:00Z,mock_agent,validation-64d21ea9b94f4fa7ba2a541beba8b34c,True
+action-8e6499836cd4476eae2c2da86f851a0d,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:02:00Z,mock_agent,validation-64d21ea9b94f4fa7ba2a541beba8b34c,True
+action-8e6499836cd4476eae2c2da86f851a0d,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:04:00Z,mock_agent,validation-64d21ea9b94f4fa7ba2a541beba8b34c,True
+action-8e6499836cd4476eae2c2da86f851a0d,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:06:00Z,mock_agent,validation-64d21ea9b94f4fa7ba2a541beba8b34c,True
+action-8e6499836cd4476eae2c2da86f851a0d,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:09:00Z,mock_agent,validation-64d21ea9b94f4fa7ba2a541beba8b34c,True
+action-8e6499836cd4476eae2c2da86f851a0d,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:11:00Z,mock_agent,validation-64d21ea9b94f4fa7ba2a541beba8b34c,True
+action-8e6499836cd4476eae2c2da86f851a0d,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:13:00Z,mock_agent,validation-64d21ea9b94f4fa7ba2a541beba8b34c,True
+action-8e6499836cd4476eae2c2da86f851a0d,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:15:00Z,mock_agent,validation-64d21ea9b94f4fa7ba2a541beba8b34c,True
+action-8e6499836cd4476eae2c2da86f851a0d,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:30:00Z,mock_agent,validation-64d21ea9b94f4fa7ba2a541beba8b34c,True
+action-8e6499836cd4476eae2c2da86f851a0d,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:20:00Z,mock_agent,validation-64d21ea9b94f4fa7ba2a541beba8b34c,True
+action-8e6499836cd4476eae2c2da86f851a0d,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:25:00Z,mock_agent,validation-64d21ea9b94f4fa7ba2a541beba8b34c,True
+action-8e6499836cd4476eae2c2da86f851a0d,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:30:00Z,mock_agent,validation-64d21ea9b94f4fa7ba2a541beba8b34c,True
+action-8e6499836cd4476eae2c2da86f851a0d,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:45:00Z,mock_agent,validation-64d21ea9b94f4fa7ba2a541beba8b34c,True

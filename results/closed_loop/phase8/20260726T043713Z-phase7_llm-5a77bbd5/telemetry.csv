@@ -1,0 +1,2 @@
+current_cooling_setpoint_c,current_heating_setpoint_c,environment_name,facility_demand_kw,facility_energy_j,handles_ready,occupancy,outdoor_temperature_c,simulation_timestamp,source,warmup_flag,zone_name,zone_temperature_c
+27.0,16.0,environment-3,1.2306730057434274,,True,0.0,19.799999999999997,2013-01-01T00:15:00Z,EnergyPlusRuntime,False,SPACE1-1,21.358736049948394

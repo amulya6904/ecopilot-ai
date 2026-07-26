@@ -1,0 +1,18 @@
+[
+  {
+    "validation_id": "validation-e51174967b0c49ffb8ae2c82cf3ed3f4",
+    "valid": true,
+    "approved": true,
+    "outcome": "approved",
+    "requested_value_c": 23.0,
+    "approved_value_c": 23.0,
+    "errors": [],
+    "warnings": [
+      "PMV_UNAVAILABLE"
+    ],
+    "risk_level": "medium",
+    "validator_version": "phase8-runtime-validator-v1",
+    "fallback_required": false,
+    "validation_latency_ms": 0.09119999594986439
+  }
+]

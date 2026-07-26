@@ -1,0 +1,11 @@
+[
+  {
+    "source": "phase9_validation",
+    "requested_setpoint_c": 29.0,
+    "expected_clamped_setpoint_c": 23.0
+  },
+  {
+    "source": "phase9_validation",
+    "action": "reset"
+  }
+]

@@ -1,0 +1,70 @@
+[
+  {
+    "validation_id": "validation-252e03ac84a146de96e29f7d661ad932",
+    "valid": true,
+    "approved": true,
+    "outcome": "hold",
+    "requested_value_c": 22.0,
+    "approved_value_c": 22.0,
+    "errors": [],
+    "warnings": [
+      "NO_SETPOINT_CHANGE",
+      "PMV_UNAVAILABLE"
+    ],
+    "risk_level": "medium",
+    "validator_version": "phase8-runtime-validator-v1",
+    "fallback_required": false,
+    "validation_latency_ms": 0.02359999780310318
+  },
+  {
+    "validation_id": "validation-709cd27bab9e44f5afb92c919bccc20b",
+    "valid": true,
+    "approved": true,
+    "outcome": "approved",
+    "requested_value_c": 23.0,
+    "approved_value_c": 23.0,
+    "errors": [],
+    "warnings": [
+      "PMV_UNAVAILABLE"
+    ],
+    "risk_level": "medium",
+    "validator_version": "phase8-runtime-validator-v1",
+    "fallback_required": false,
+    "validation_latency_ms": 0.03139999898849055
+  },
+  {
+    "validation_id": "validation-f63d0b7c923749a883a36b7b32da4a7f",
+    "valid": true,
+    "approved": true,
+    "outcome": "hold",
+    "requested_value_c": 23.0,
+    "approved_value_c": 23.0,
+    "errors": [],
+    "warnings": [
+      "NO_SETPOINT_CHANGE",
+      "PMV_UNAVAILABLE"
+    ],
+    "risk_level": "medium",
+    "validator_version": "phase8-runtime-validator-v1",
+    "fallback_required": false,
+    "validation_latency_ms": 0.01580000389367342
+  },
+  {
+    "validation_id": "validation-5e653f0af8934bc5bf1d6e764a6f03f5",
+    "valid": false,
+    "approved": false,
+    "outcome": "rejected",
+    "requested_value_c": 27.0,
+    "approved_value_c": null,
+    "errors": [
+      "MAXIMUM_DELTA_EXCEEDED"
+    ],
+    "warnings": [
+      "PMV_UNAVAILABLE"
+    ],
+    "risk_level": "high",
+    "validator_version": "phase8-runtime-validator-v1",
+    "fallback_required": true,
+    "validation_latency_ms": 0.019099999917671084
+  }
+]

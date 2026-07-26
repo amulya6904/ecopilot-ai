@@ -1,0 +1,14 @@
+action_id,actuator_handle,application_success,applied_value,approved_value,observed_setpoint_after_application,requested_value,reset_performed,simulation_timestamp,source_type,validation_id,verified
+action-f4be7d2ae34b4330a513650c141664c3,416,True,23.0,23.0,,23.0,False,2013-01-01T09:15:00Z,manual,validation-4119c1346abf4ef68c2fe35ae60a7452,False
+action-f4be7d2ae34b4330a513650c141664c3,416,True,23.0,23.0,,23.0,False,2013-01-01T09:02:00Z,manual,validation-4119c1346abf4ef68c2fe35ae60a7452,False
+action-f4be7d2ae34b4330a513650c141664c3,416,True,23.0,23.0,,23.0,False,2013-01-01T09:04:00Z,manual,validation-4119c1346abf4ef68c2fe35ae60a7452,False
+action-f4be7d2ae34b4330a513650c141664c3,416,True,23.0,23.0,,23.0,False,2013-01-01T09:06:00Z,manual,validation-4119c1346abf4ef68c2fe35ae60a7452,False
+action-f4be7d2ae34b4330a513650c141664c3,416,True,23.0,23.0,,23.0,False,2013-01-01T09:09:00Z,manual,validation-4119c1346abf4ef68c2fe35ae60a7452,False
+action-f4be7d2ae34b4330a513650c141664c3,416,True,23.0,23.0,,23.0,False,2013-01-01T09:11:00Z,manual,validation-4119c1346abf4ef68c2fe35ae60a7452,False
+action-f4be7d2ae34b4330a513650c141664c3,416,True,23.0,23.0,,23.0,False,2013-01-01T09:13:00Z,manual,validation-4119c1346abf4ef68c2fe35ae60a7452,False
+action-f4be7d2ae34b4330a513650c141664c3,416,True,23.0,23.0,,23.0,False,2013-01-01T09:15:00Z,manual,validation-4119c1346abf4ef68c2fe35ae60a7452,False
+action-f4be7d2ae34b4330a513650c141664c3,416,True,23.0,23.0,,23.0,False,2013-01-01T09:30:00Z,manual,validation-4119c1346abf4ef68c2fe35ae60a7452,False
+action-f4be7d2ae34b4330a513650c141664c3,416,True,23.0,23.0,,23.0,False,2013-01-01T09:20:00Z,manual,validation-4119c1346abf4ef68c2fe35ae60a7452,False
+action-f4be7d2ae34b4330a513650c141664c3,416,True,23.0,23.0,,23.0,False,2013-01-01T09:25:00Z,manual,validation-4119c1346abf4ef68c2fe35ae60a7452,False
+action-f4be7d2ae34b4330a513650c141664c3,416,True,23.0,23.0,,23.0,False,2013-01-01T09:30:00Z,manual,validation-4119c1346abf4ef68c2fe35ae60a7452,False
+action-f4be7d2ae34b4330a513650c141664c3,416,True,23.0,23.0,,23.0,False,2013-01-01T09:45:00Z,manual,validation-4119c1346abf4ef68c2fe35ae60a7452,False

@@ -1,0 +1,14 @@
+{
+  "run_id": "20260726T061826Z-manual-8b6a674c",
+  "mode": "manual",
+  "created_at": "2026-07-26T06:18:26.158421+00:00",
+  "source_model": "C:\\Users\\amuly\\Desktop\\ecopilot-ai\\energyplus\\models\\baseline\\phase5_baseline.idf",
+  "runtime_model": "C:\\Users\\amuly\\Desktop\\ecopilot-ai\\energyplus\\models\\baseline\\phase5_baseline.idf",
+  "source_model_sha256": "7523c515744efa4310bd40f403ebb270d649a3599ba99aa0e675e31f697b9dad",
+  "runtime_model_sha256": "7523c515744efa4310bd40f403ebb270d649a3599ba99aa0e675e31f697b9dad",
+  "weather_file": "C:\\Users\\amuly\\Desktop\\ecopilot-ai\\energyplus\\weather\\phase4_weather.epw",
+  "controlled_zone": "SPACE1-1",
+  "real_llm_enabled": false,
+  "final_optimization_result": false,
+  "savings_result": false
+}

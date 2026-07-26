@@ -1,0 +1,8 @@
+action_id,actuator_handle,application_success,applied_value,approved_value,observed_setpoint_after_application,requested_value,reset_performed,simulation_timestamp,source_type,validation_id,verified
+action-2b413c1364324007a79e1c184085be35,416,True,27.5,27.5,,27.5,False,2013-01-01T00:15:00Z,fallback,validation-893096afa9334cb09883ce4a370371b8,False
+action-2b413c1364324007a79e1c184085be35,416,True,27.5,27.5,,27.5,False,2013-01-01T00:30:00Z,fallback,validation-893096afa9334cb09883ce4a370371b8,False
+action-2b413c1364324007a79e1c184085be35,416,True,27.5,27.5,,27.5,False,2013-01-01T00:45:00Z,fallback,validation-893096afa9334cb09883ce4a370371b8,False
+action-bf07afdeb57c4ce7b3db317a458dfcbb,416,True,27.5,27.5,,27.5,False,2013-01-01T01:00:00Z,fallback,validation-22253013efa44594a4e69db51f50d785,False
+action-bf07afdeb57c4ce7b3db317a458dfcbb,416,True,27.5,27.5,,27.5,False,2013-01-01T01:15:00Z,fallback,validation-22253013efa44594a4e69db51f50d785,False
+action-bf07afdeb57c4ce7b3db317a458dfcbb,416,True,27.5,27.5,,27.5,False,2013-01-01T01:30:00Z,fallback,validation-22253013efa44594a4e69db51f50d785,False
+action-bf07afdeb57c4ce7b3db317a458dfcbb,416,True,27.5,27.5,,27.5,False,2013-01-01T01:45:00Z,fallback,validation-22253013efa44594a4e69db51f50d785,False

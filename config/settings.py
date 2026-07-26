@@ -1,6 +1,8 @@
-"""Validated, immutable settings for EcoPilot AI Phase 1."""
+"""Validated, immutable settings for EcoPilot AI."""
 
 from dataclasses import dataclass, field
+import os
+from pathlib import Path
 from types import MappingProxyType
 from typing import Mapping
 
@@ -158,6 +160,251 @@ class OptimizationSettings:
             raise ValueError("Currency code must not be empty.")
 
 
+@dataclass(frozen=True)
+class SimulatorPhysicsSettings:
+    """Central coefficients and bounds for the Phase 2 development harness."""
+
+    default_setpoint_c: float = 24.0
+    default_fan_speed_percent: int = 50
+    default_ventilation_level: str = "medium"
+    outdoor_heat_transfer_per_hour: float = 0.12
+    occupant_heat_gain_c_per_hour: float = 0.80
+    cooling_effect_c_per_hour: float = 5.50
+    temperature_noise_std_c: float = 0.03
+    humidity_noise_std_percent: float = 0.15
+    weather_temperature_noise_std_c: float = 0.20
+    weather_humidity_noise_std_percent: float = 0.40
+    minimum_temperature_c: float = 15.0
+    maximum_temperature_c: float = 40.0
+    minimum_humidity_percent: float = 20.0
+    maximum_humidity_percent: float = 80.0
+    maximum_co2_ppm: float = 3000.0
+    low_equipment_heat_gain_c_per_hour: float = 0.25
+    medium_equipment_heat_gain_c_per_hour: float = 0.50
+    high_equipment_heat_gain_c_per_hour: float = 0.90
+    co2_generation_factor: float = 0.35
+    low_ventilation_removal_fraction: float = 0.03
+    medium_ventilation_removal_fraction: float = 0.08
+    high_ventilation_removal_fraction: float = 0.15
+    humidity_outdoor_transfer_per_hour: float = 0.08
+    humidity_occupant_gain_per_hour: float = 0.60
+    humidity_dehumidification_per_hour: float = 1.20
+    minimum_hvac_power_fraction: float = 0.0
+    maximum_hvac_power_fraction: float = 1.0
+
+    def validate(self, hvac: HVACSettings, air_quality: AirQualitySettings) -> None:
+        """Validate physics coefficients against Phase 1 equipment settings."""
+        rate_names = (
+            "outdoor_heat_transfer_per_hour", "occupant_heat_gain_c_per_hour",
+            "cooling_effect_c_per_hour", "temperature_noise_std_c",
+            "humidity_noise_std_percent", "weather_temperature_noise_std_c",
+            "weather_humidity_noise_std_percent",
+            "low_equipment_heat_gain_c_per_hour",
+            "medium_equipment_heat_gain_c_per_hour",
+            "high_equipment_heat_gain_c_per_hour", "co2_generation_factor",
+            "humidity_outdoor_transfer_per_hour",
+            "humidity_occupant_gain_per_hour",
+            "humidity_dehumidification_per_hour",
+        )
+        if any(getattr(self, name) < 0 for name in rate_names):
+            raise ValueError("Simulator rates and noise values must be non-negative.")
+        if self.minimum_temperature_c >= self.maximum_temperature_c:
+            raise ValueError("Simulator temperature bounds are invalid.")
+        if self.minimum_humidity_percent >= self.maximum_humidity_percent:
+            raise ValueError("Simulator humidity bounds are invalid.")
+        if not hvac.minimum_setpoint_c <= self.default_setpoint_c <= hvac.maximum_setpoint_c:
+            raise ValueError("Default setpoint is outside HVAC limits.")
+        if not (hvac.minimum_fan_speed_percent <= self.default_fan_speed_percent
+                <= hvac.maximum_fan_speed_percent):
+            raise ValueError("Default fan speed is outside HVAC limits.")
+        if self.default_ventilation_level not in hvac.ventilation_candidates:
+            raise ValueError("Default ventilation level is invalid.")
+        removals = (
+            self.low_ventilation_removal_fraction,
+            self.medium_ventilation_removal_fraction,
+            self.high_ventilation_removal_fraction,
+        )
+        if any(not 0 <= value <= 1 for value in removals):
+            raise ValueError("Ventilation removal fractions must be between zero and one.")
+        if self.maximum_co2_ppm <= air_quality.outdoor_co2_ppm:
+            raise ValueError("Maximum CO2 must exceed outdoor CO2.")
+        if not (0 <= self.minimum_hvac_power_fraction
+                <= self.maximum_hvac_power_fraction <= 1):
+            raise ValueError("HVAC power fractions must be ordered within zero and one.")
+
+    @property
+    def ventilation_removal_fractions(self) -> Mapping[str, float]:
+        """Return immutable ventilation-to-CO2-removal mappings."""
+        return MappingProxyType({
+            "low": self.low_ventilation_removal_fraction,
+            "medium": self.medium_ventilation_removal_fraction,
+            "high": self.high_ventilation_removal_fraction,
+        })
+
+    @property
+    def equipment_heat_gains(self) -> Mapping[str, float]:
+        """Return immutable equipment heat gains by configured level."""
+        return MappingProxyType({
+            "low": self.low_equipment_heat_gain_c_per_hour,
+            "medium": self.medium_equipment_heat_gain_c_per_hour,
+            "high": self.high_equipment_heat_gain_c_per_hour,
+        })
+
+
+@dataclass(frozen=True)
+class EnergyPlusSettings:
+    """Phase 4 installation and future-run readiness settings.
+
+    File existence is deliberately checked by discovery rather than at import time.
+    Environment overrides make one immutable settings object sufficient for CLI,
+    backend, and dashboard use.
+    """
+
+    enabled: bool = False
+    installation_dir: Path = field(default_factory=lambda: Path(
+        os.environ.get("ENERGYPLUS_HOME", r"C:\EnergyPlusV26-1-0")
+    ))
+    executable_path: Path = field(default_factory=lambda: Path(
+        os.environ.get(
+            "ENERGYPLUS_EXECUTABLE",
+            str(Path(os.environ.get(
+                "ENERGYPLUS_HOME", r"C:\EnergyPlusV26-1-0"
+            )) / "energyplus.exe"),
+        )
+    ))
+    idd_path: Path = field(default_factory=lambda: Path(
+        os.environ.get(
+            "ENERGYPLUS_IDD",
+            str(Path(os.environ.get(
+                "ENERGYPLUS_HOME", r"C:\EnergyPlusV26-1-0"
+            )) / "Energy+.idd"),
+        )
+    ))
+    source_model_path: Path = Path("energyplus/models/base/phase4_base_model.idf")
+    base_model_path: Path = field(default_factory=lambda: Path(
+        os.environ.get(
+            "ENERGYPLUS_MODEL",
+            "energyplus/models/modified/phase4_telemetry_model.idf",
+        )
+    ))
+    weather_file_path: Path = field(default_factory=lambda: Path(
+        os.environ.get("ENERGYPLUS_WEATHER", "energyplus/weather/phase4_weather.epw")
+    ))
+    output_root: Path = field(default_factory=lambda: Path(
+        os.environ.get("ENERGYPLUS_OUTPUT_ROOT", "energyplus/output/official")
+    ))
+    logs_root: Path = field(default_factory=lambda: Path(
+        os.environ.get("ENERGYPLUS_LOG_ROOT", "energyplus/logs")
+    ))
+    metadata_root: Path = Path("energyplus/metadata")
+    modified_models_directory: Path = Path("energyplus/models/modified")
+    expected_version: str | None = "26.1"
+    process_timeout_seconds: int = 300
+    preserve_raw_outputs: bool = True
+    expand_objects: bool = True
+    readvars: bool = True
+    annual_run: bool = True
+    control_interval_minutes: int = 15
+    primary_backend: str = "energyplus"
+    fallback_backend: str = "lightweight"
+
+    def __post_init__(self) -> None:
+        valid_backends = {"energyplus", "lightweight"}
+        if self.control_interval_minutes <= 0:
+            raise ValueError("EnergyPlus control interval must be positive.")
+        if self.process_timeout_seconds <= 0:
+            raise ValueError("EnergyPlus timeout must be positive.")
+        if self.primary_backend not in valid_backends:
+            raise ValueError("Primary backend must be energyplus or lightweight.")
+        if self.fallback_backend not in valid_backends:
+            raise ValueError("Fallback backend must be energyplus or lightweight.")
+
+    @property
+    def idf_path(self) -> Path:
+        """Backward-compatible alias for the configured model."""
+        return self.base_model_path
+
+    @property
+    def epw_path(self) -> Path:
+        """Backward-compatible alias for the configured weather file."""
+        return self.weather_file_path
+
+    @property
+    def output_directory(self) -> Path:
+        return self.output_root
+
+    @property
+    def logs_directory(self) -> Path:
+        return self.logs_root
+
+    @property
+    def timeout_seconds(self) -> int:
+        return self.process_timeout_seconds
+
+
+@dataclass(frozen=True)
+class AgentSettings:
+    """Configuration boundary for a future open-source LLM agent."""
+
+    enabled: bool = False
+    provider: str = "ollama"
+    model_name: str = "qwen2.5"
+    request_timeout_seconds: int = 30
+    maximum_retries: int = 2
+    maximum_context_records: int = 100
+    tool_calling_enabled: bool = False
+    mcp_enabled: bool = False
+
+    def __post_init__(self) -> None:
+        if not self.provider.strip() or not self.model_name.strip():
+            raise ValueError("Agent provider and model name must not be empty.")
+        if self.request_timeout_seconds <= 0:
+            raise ValueError("Agent request timeout must be positive.")
+        if self.maximum_retries < 0:
+            raise ValueError("Agent maximum retries must not be negative.")
+        if self.maximum_context_records <= 0:
+            raise ValueError("Agent context record limit must be positive.")
+
+
+@dataclass(frozen=True)
+class ComfortEvaluationSettings:
+    """PMV targets with an explicit temperature fallback for development data."""
+
+    pmv_preferred_min: float = -0.5
+    pmv_preferred_max: float = 0.5
+    pmv_allowed_min: float = -1.0
+    pmv_allowed_max: float = 1.0
+    use_temperature_fallback_when_pmv_unavailable: bool = True
+
+    def __post_init__(self) -> None:
+        if self.pmv_preferred_min >= self.pmv_preferred_max:
+            raise ValueError("Preferred PMV minimum must be below its maximum.")
+        if self.pmv_allowed_min >= self.pmv_allowed_max:
+            raise ValueError("Allowed PMV minimum must be below its maximum.")
+        if not (
+            self.pmv_allowed_min <= self.pmv_preferred_min
+            and self.pmv_preferred_max <= self.pmv_allowed_max
+        ):
+            raise ValueError("Preferred PMV range must be inside the allowed range.")
+
+
+@dataclass(frozen=True)
+class PeakDemandSettings:
+    """Prototype demand thresholds to calibrate against EnergyPlus in Phase 4."""
+
+    enabled: bool = True
+    warning_threshold_kw: float = 24.0
+    critical_threshold_kw: float = 30.0
+
+    def __post_init__(self) -> None:
+        if self.warning_threshold_kw <= 0:
+            raise ValueError("Peak-demand warning threshold must be positive.")
+        if self.critical_threshold_kw <= self.warning_threshold_kw:
+            raise ValueError(
+                "Peak-demand critical threshold must exceed the warning threshold."
+            )
+
+
 SIMULATION = SimulationSettings()
 COMFORT = ComfortSettings()
 AIR_QUALITY = AirQualitySettings()
@@ -165,3 +412,9 @@ HVAC = HVACSettings()
 BASELINE = BaselineSettings()
 BASELINE.validate(HVAC)
 OPTIMIZATION = OptimizationSettings()
+SIMULATOR_PHYSICS = SimulatorPhysicsSettings()
+SIMULATOR_PHYSICS.validate(HVAC, AIR_QUALITY)
+ENERGYPLUS = EnergyPlusSettings()
+AGENT = AgentSettings()
+COMFORT_EVALUATION = ComfortEvaluationSettings()
+PEAK_DEMAND = PeakDemandSettings()

@@ -1,0 +1,76 @@
+{
+  "zone_temperature": 19,
+  "outdoor_temperature": 0,
+  "cooling_setpoint": 44,
+  "heating_setpoint": 43,
+  "occupancy": 2,
+  "facility_demand": 84,
+  "facility_energy": -1,
+  "cooling_actuator": 416,
+  "initialized": true,
+  "api_ready_when_initialized": true,
+  "exact_identifiers": {
+    "zone_temperature": {
+      "field": "zone_temperature",
+      "exchange_type": "variable",
+      "name": "Zone Mean Air Temperature",
+      "key": "SPACE1-1",
+      "required": true
+    },
+    "outdoor_temperature": {
+      "field": "outdoor_temperature",
+      "exchange_type": "variable",
+      "name": "Site Outdoor Air Drybulb Temperature",
+      "key": "Environment",
+      "required": true
+    },
+    "cooling_setpoint": {
+      "field": "cooling_setpoint",
+      "exchange_type": "variable",
+      "name": "Zone Thermostat Cooling Setpoint Temperature",
+      "key": "SPACE1-1",
+      "required": true
+    },
+    "heating_setpoint": {
+      "field": "heating_setpoint",
+      "exchange_type": "variable",
+      "name": "Zone Thermostat Heating Setpoint Temperature",
+      "key": "SPACE1-1",
+      "required": false
+    },
+    "occupancy": {
+      "field": "occupancy",
+      "exchange_type": "variable",
+      "name": "Zone People Occupant Count",
+      "key": "SPACE1-1",
+      "required": false
+    },
+    "facility_demand": {
+      "field": "facility_demand",
+      "exchange_type": "variable",
+      "name": "Facility Total Electricity Demand Rate",
+      "key": "Whole Building",
+      "required": false
+    },
+    "facility_energy": {
+      "field": "facility_energy",
+      "exchange_type": "meter",
+      "name": "Electricity:Facility",
+      "key": "",
+      "required": false
+    },
+    "cooling_actuator": {
+      "exchange_type": "actuator",
+      "component_type": "Zone Temperature Control",
+      "control_type": "Cooling Setpoint",
+      "actuator_key": "SPACE1-1",
+      "identifier": "Zone Temperature Control|Cooling Setpoint|SPACE1-1",
+      "required": true
+    }
+  },
+  "required_invalid": [],
+  "optional_unavailable": [
+    "facility_energy"
+  ],
+  "ready": true
+}

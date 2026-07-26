@@ -1,0 +1,20 @@
+[
+  {
+    "timestamp": "2026-07-26 06:05:27.165670+00:00",
+    "source": "energyplus",
+    "severity": "warning",
+    "code": "ENERGYPLUS_WARNING",
+    "message": "Weather file location will be used rather than entered (IDF) Location object. ..Location object=CHICAGO_IL_USA TMY2-94846 ..Weather File Location=Bengaluru-Hindustan.AP KA IND SRC-TMYx WMO#=432960 ..due to location differences, Latitude difference=[28.83] degrees, Longitude difference=[165.42] degrees. ..Time Zone difference=[11.5] hour(s), Elevation difference=[367.37] percent, [698.00] meters.",
+    "raw_log_excerpt": "   ** Warning ** Weather file location will be used rather than entered (IDF) Location object.\n   **   ~~~   ** ..Location object=CHICAGO_IL_USA TMY2-94846\n   **   ~~~   ** ..Weather File Location=Bengaluru-Hindustan.AP KA IND SRC-TMYx WMO#=432960\n   **   ~~~   ** ..due to location differences, Latitude difference=[28.83] degrees, Longitude difference=[165.42] degrees.\n   **   ~~~   ** ..Time Zone difference=[11.5] hour(s), Elevation difference=[367.37] percent, [698.00] meters.",
+    "recoverable": true
+  },
+  {
+    "timestamp": "2026-07-26 06:05:27.167105+00:00",
+    "source": "energyplus",
+    "severity": "warning",
+    "code": "ENERGYPLUS_WARNING",
+    "message": "The following Report Variables were requested but not generated -- check.rdd file Either the IDF did not contain these elements, the variable name is misspelled, or the requested variable is an advanced output which requires Output : Diagnostics, DisplayAdvancedReportVariables;",
+    "raw_log_excerpt": "   ** Warning ** The following Report Variables were requested but not generated -- check.rdd file\n   **   ~~~   ** Either the IDF did not contain these elements, the variable name is misspelled,\n   **   ~~~   ** or the requested variable is an advanced output which requires Output : Diagnostics, DisplayAdvancedReportVariables;",
+    "recoverable": true
+  }
+]
