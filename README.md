@@ -12,10 +12,11 @@ open-source LLM such as Qwen, Mistral, or Llama. Structured control proposals mu
 pass a deterministic safety validator before setpoints or supervisory overrides
 are injected into the next EnergyPlus interval.
 
-This repository now executes verified EnergyPlus 26.1 batch simulations and the
-official fixed-schedule EnergyPlus baseline for Phase 5. It does **not** connect an
-LLM, expose MCP tools, inject actuators, optimize controls, compare savings, or run
-a closed loop.
+This repository now executes verified EnergyPlus 26.1 batch and Python Runtime API
+simulations, the official Phase 5 baseline, the Phase 6 MCP layer, the Phase 7
+local advisory agent, the Phase 8 closed-loop actuator path, and the deterministic
+Phase 9 safety supervisor. It does not implement Phase 10, calculate final
+savings, or claim a final optimized result.
 
 ## Current implemented phases
 
@@ -25,7 +26,10 @@ a closed loop.
 - Phase 4: EnergyPlus execution and initial official telemetry — complete
 - Phase 5: official fixed-schedule EnergyPlus baseline — complete
 - Phase 6: local MCP tool layer — complete
-- Phase 7 onward — not started
+- Phase 7: local open-source LLM advisory agent — complete
+- Phase 8: safe closed-loop EnergyPlus runtime control — complete
+- Phase 9: deterministic safety, PMV/proxy comfort, demand, and recovery — complete
+- Phase 10 onward — not started
 
 The existing three-zone custom simulator is preserved as a lightweight development
 digital twin test harness and fallback backend. It validates control interfaces,
@@ -68,7 +72,9 @@ It maps existing `ZoneState` and `HVACAction` records to shared schemas. PMV rem
 
 `EnergyPlusBackend` discovers the configured engine and inputs, runs isolated batch
 simulations, retains diagnostics, and parses initial official telemetry. It never
-silently falls back. Runtime stepping and actuator callbacks remain unimplemented.
+silently falls back. `energyplus/runtime_control/` separately implements the
+verified Runtime API callbacks, selected actuator, safety gate, observation, and
+reset path.
 
 ## Phase 3 development baseline
 
@@ -98,7 +104,9 @@ use prediction, an LLM, or optimization.
 - `results/development/`: generated lightweight outputs
 - `results/official/`: generated official Phase 5 EnergyPlus baseline artifacts
 - `docs/`: target architecture, requirements mapping, and phase status
-- `mcp_service/`, `llm/`: future boundaries only
+- `mcp_service/`: implemented bounded local Phase 6 MCP tools and resources
+- `llm/`: implemented local Phase 7 advisory agent
+- `safety/`: deterministic Phase 9 safety, comfort, demand, and recovery authority
 - `tests/`: regression, interface, schema, documentation, and import-safety tests
 
 ## Setup on Windows PowerShell
@@ -125,6 +133,11 @@ python -m scripts.run_phase3_baseline
 python -m scripts.run_phase4_energyplus
 python -m scripts.run_phase5_energyplus_baseline
 python -m scripts.run_phase5_energyplus_baseline --verify-reproducibility
+python -m scripts.test_phase8_manual_actuator
+python -m scripts.run_phase8_mock_loop
+python -m scripts.test_phase9_supervisor
+python -m scripts.run_phase9_fault_injection
+python -m scripts.run_phase9_safety_validation
 python -m streamlit run app.py
 ```
 
@@ -232,7 +245,51 @@ python -m scripts.run_phase6_mcp_server
 python -m scripts.test_phase6_mcp_client
 ```
 
-See `docs/MCP_TOOLS.md` and `docs/MCP_SECURITY.md`. Phase 7 is the handoff for
-future open-source LLM integration.
+See `docs/MCP_TOOLS.md` and `docs/MCP_SECURITY.md`.
 
-**Next phase: Phase 7 — open-source LLM integration using bounded MCP tools.**
+## Phase 7 — local open-source LLM advisory agent
+
+Phase 7 connects a local open-source LLM to the verified Phase 6 MCP tool layer.
+The Phase 7 component remains advisory and cannot write an actuator. Phases 8–9
+separately convert a validated proposal into a strict candidate, apply deterministic
+safety authority, and own the verified runtime actuator path. Optimization results
+and savings comparison remain unimplemented.
+
+The default local model is `qwen3:4b`. The project never downloads model files
+automatically; review disk, memory, and bandwidth requirements first.
+
+```powershell
+python -m scripts.check_ollama
+ollama pull qwen3:4b
+python -m scripts.run_phase7_agent
+python -m scripts.test_phase7_agent
+pytest -q -m ollama
+streamlit run app.py
+```
+
+Use `ECOPILOT_LLM_MODEL` to select another installed model. Normal tests and the
+default smoke script use deterministic mocks. See `docs/LLM_AGENT.md`,
+`docs/AGENT_PROMPTING.md`, and `docs/AGENT_SECURITY.md`.
+
+## Phase 9 — deterministic safety supervisor
+
+Phase 9 adds deterministic safety, comfort, PMV, demand, freshness, rate, and
+actuator-health supervision to the verified Phase 8 runtime-control path. PMV is
+used only when genuinely available; otherwise the system explicitly uses an
+occupied-temperature proxy. This phase validates safety intervention and recovery,
+not final optimization or savings.
+
+The final authority accepts the strict `SafetyStateSnapshot`, evaluates bounded
+rules in a fixed order, and returns `approve`, `approve_with_clamp`, `hold`,
+`reject`, `fallback`, or `emergency_fallback`. Only an approved or independently
+revalidated clamped candidate reaches the single Phase 8 actuator write. The
+post-action verifier links observed values to applied-action events and reuses the
+Phase 8 actuator reset for rollback and emergency fallback.
+
+Artifacts are written under `results/safety/phase9/<run-id>/`; the append-only
+safety audit is `results/audit/phase9_safety_events.jsonl`. Demand warning and
+critical limits of 24 kW and 30 kW are prototype project thresholds pending final
+calibration. The retained model does not expose genuine PMV/PPD, so real runtime
+runs explicitly use the occupied-temperature proxy.
+
+**Next phase: Phase 10 — matched EnergyPlus comparison is not implemented.**

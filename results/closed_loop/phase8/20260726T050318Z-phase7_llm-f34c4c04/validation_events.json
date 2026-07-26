@@ -1,0 +1,35 @@
+[
+  {
+    "validation_id": "validation-893096afa9334cb09883ce4a370371b8",
+    "valid": true,
+    "approved": true,
+    "outcome": "approved",
+    "requested_value_c": 27.5,
+    "approved_value_c": 27.5,
+    "errors": [],
+    "warnings": [
+      "PMV_UNAVAILABLE"
+    ],
+    "risk_level": "medium",
+    "validator_version": "phase8-runtime-validator-v1",
+    "fallback_required": false,
+    "validation_latency_ms": 0.09409999620402232
+  },
+  {
+    "validation_id": "validation-22253013efa44594a4e69db51f50d785",
+    "valid": true,
+    "approved": true,
+    "outcome": "hold",
+    "requested_value_c": 27.5,
+    "approved_value_c": 27.5,
+    "errors": [],
+    "warnings": [
+      "NO_SETPOINT_CHANGE",
+      "PMV_UNAVAILABLE"
+    ],
+    "risk_level": "medium",
+    "validator_version": "phase8-runtime-validator-v1",
+    "fallback_required": false,
+    "validation_latency_ms": 0.11030000314349309
+  }
+]

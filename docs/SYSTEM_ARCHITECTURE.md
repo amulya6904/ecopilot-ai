@@ -32,10 +32,8 @@ EnergyPlus next interval
 Dashboard, logs and audit history
 ```
 
-This is a target design beyond Phase 5. EnergyPlus batch execution, normalized
-telemetry, and the official fixed-schedule baseline are implemented; MCP, LLM,
-safety injection, actuators, optimization, savings comparison, and closed-loop
-segments are not implemented.
+This design is implemented through the deterministic Phase 9 safety and recovery
+boundary. Phase 10 optimization and matched savings comparison are not implemented.
 
 ## 3. Current development architecture
 
@@ -130,16 +128,15 @@ result. Current actions are `baseline_schedule` or `fixed_test_action`, never AI
 
 ## 11. MCP tool architecture
 
-Future bounded tools will read summarized state, constraints, demand, carbon,
-recent actions, and relevant errors; submit structured proposals; and query audit
-records. Tools will enforce input schemas and least authority. No MCP server tools
-exist today.
+Phase 6 bounded tools read summarized state, constraints, demand, carbon, recent
+actions, and relevant errors. Tools enforce input schemas and least authority.
+They cannot write schedules, actuators, thermostats, or setpoints.
 
 ## 12. LLM prompting approach
 
-The future open-source model will receive a compact system policy, current targets
-and constraints, summarized recent telemetry, relevant errors, and available tool
-schemas. Prompts will distinguish observations from unavailable fields and require
+The Phase 7 open-source model receives a compact system policy, current targets and
+constraints, summarized official evidence, relevant errors, and bounded tool
+schemas. Prompts distinguish observations from unavailable fields and require
 explicit reasons.
 
 ## 13. Structured response format
@@ -157,10 +154,10 @@ fall back to a known schedule and are audited.
 
 ## 15. Forward injection
 
-After validation, Phase 8 will map control fields to EnergyPlus actuators or
-supervisory schedules and apply them before the next interval. Phase 5 performs
-only deterministic offline IDF derivation for the conventional baseline; no runtime
-forward injection is implemented.
+Phase 8 maps a validated cooling-setpoint candidate to the selected Runtime API
+actuator and applies it before the next interval. Phase 9 now provides final
+deterministic authority and post-action verification. Phase 5 remains the
+deterministic fallback schedule.
 
 ## 16. Latency-management strategy
 
@@ -200,7 +197,8 @@ input hashes, and provenance. Source IDFs are not globally ignored.
 Each interval will link source telemetry, summarized prompt context, tool calls,
 model response, proposed action, validation outcome, applied override, runtime
 errors, and resulting telemetry. Logs must make fallback and human intervention
-visible. This audit pipeline is planned, not implemented.
+visible. Phase 7, Phase 8, and Phase 9 write separate bounded audit streams and
+linked artifact bundles.
 
 Phase 5 establishes the official fixed-schedule EnergyPlus baseline using the
 existing verified EnergyPlus example model. Original EnergyPlus zone identifiers
@@ -228,3 +226,56 @@ EnergyPlus parsing or baseline metric calculation. Its only execution tool invok
 No MCP tool modifies a schedule, actuator, thermostat, or setpoint.
 
 Phase 6 exposes the verified EnergyPlus and official baseline capabilities through a local MCP server. The server provides bounded, validated tools and read-only resources. It does not yet include an open-source LLM, autonomous reasoning, actuator injection, optimization, or closed-loop control.
+
+## Phase 7 advisory-agent boundary
+
+```text
+local Ollama
+    -> bounded structured chat
+Phase 7 AdvisoryAgent
+    -> 12 read-only tools over official MCP stdio
+Phase 6 official EnergyPlus baseline data
+    -> strict schema and deterministic validator
+advisory artifacts and compact JSONL audit
+```
+
+Phase 7 connects a local open-source LLM to the verified Phase 6 MCP tool layer.
+The Phase 7 component remains advisory. Phases 8–9 separately implement candidate
+conversion, deterministic safety authority, runtime control, observation, and
+recovery. Optimization results and savings comparison remain unimplemented.
+
+## Phase 8–9 verified runtime and safety path
+
+```text
+Phase 7 structured advisory (optional)
+        |
+        v
+Phase 8 executable candidate + preliminary runtime validation
+        |
+        v
+Phase 9 strict SafetyStateSnapshot
+        |
+        v
+Deterministic rule evaluation and SafetyDecision
+        |
+        +-- approve / approve_with_clamp --> Phase 8 single actuator write
+        |
+        +-- hold / reject / fallback / emergency_fallback
+                                             |
+                                             v
+                                  Phase 8 baseline reset
+        |
+        v
+Phase 9 post-action verification --> rollback/emergency evidence
+```
+
+The callback before HVAC managers owns the one actuator application site. The
+end-zone-timestep callback observes the resulting cooling setpoint, populates the
+linked Phase 8 `observed_setpoint_after_application` field, and invokes the Phase 9
+post-action verifier. Phase 9 never creates a second actuator mechanism.
+
+Phase 9 adds deterministic safety, comfort, PMV, demand, freshness, rate, and
+actuator-health supervision to the verified Phase 8 runtime-control path. PMV is
+used only when genuinely available; otherwise the system explicitly uses an
+occupied-temperature proxy. This phase validates safety intervention and recovery,
+not final optimization or savings.

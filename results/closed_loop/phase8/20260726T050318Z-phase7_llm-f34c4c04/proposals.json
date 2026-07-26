@@ -1,0 +1,57 @@
+[
+  {
+    "source": "phase7_llm_adapter",
+    "interval": 1,
+    "zone": "SPACE1-1",
+    "live_current_setpoint_c": 27.0,
+    "proposal_current_setpoint_c": null,
+    "raw_llm_requested_setpoint_c": 26.0,
+    "normalized_requested_setpoint_c": 26.0,
+    "normalization_applied": false,
+    "normalization_reason": "ENERGY_REDUCTION_DIRECTION_INVALID",
+    "selected_action_setpoint_c": 27.5,
+    "fallback_target_c": 27.5,
+    "fallback_used": true,
+    "fallback_reason": "ENERGY_REDUCTION_DIRECTION_INVALID",
+    "proposal_source": "deterministic_runtime_fallback",
+    "llm_called": true,
+    "llm_completed": true,
+    "llm_action_used": false,
+    "llm_error_code": null,
+    "llm_error_message": null,
+    "llm_raw_content": "{\n  \"energyplus_zone_name\": \"SPACE1-1\",\n  \"proposed_setpoint_c\": 26.0,\n  \"objective\": \"reduce_energy\",\n  \"confidence\": 0.95,\n  \"reason\": \"Current setpoint is 27.0C, outdoor temp is 19.8C, zone temp is 21.4C, occupancy 0.0, PMV not available. Adjusting down by 1.0C to reduce energy while maintaining comfort.\"\n}",
+    "llm_proposal": {
+      "energyplus_zone_name": "SPACE1-1",
+      "proposed_setpoint_c": 26.0,
+      "objective": "reduce_energy",
+      "confidence": 0.95,
+      "reason": "Current setpoint is 27.0C, outdoor temp is 19.8C, zone temp is 21.4C, occupancy 0.0, PMV not available. Adjusting down by 1.0C to reduce energy while maintaining comfort."
+    },
+    "compact_llm_messages": [
+      {
+        "role": "system",
+        "content": "Return one advisory cooling-setpoint decision as JSON matching the supplied schema. The live Runtime API context is authoritative. Choose only the supplied zone, stay within the stated bounds and maximum delta, and do not claim control application, optimization, deployment, or savings."
+      },
+      {
+        "role": "user",
+        "content": "Return only the compact JSON decision.\n{\"advisory_only_constraints\":{\"advisory_only\":true,\"no_optimization_claim\":true,\"no_savings_claim\":true,\"requires_deterministic_runtime_validation\":true},\"current_comfort_evidence\":{\"evidence_sufficient_for_conservative_adjustment\":true,\"heating_setpoint_c\":16.0,\"occupancy\":0.0,\"outdoor_temperature_c\":19.799999999999997,\"pmv_available\":false,\"zone_temperature_c\":21.415220358003385},\"live_current_setpoint_c\":27.0,\"maximum_delta_c\":1.0,\"maximum_setpoint_c\":28.0,\"minimum_setpoint_c\":20.0,\"objective\":\"reduce_energy\",\"zone\":\"SPACE1-1\"}"
+      }
+    ],
+    "objective": "reduce_energy",
+    "advisory_only": true
+  },
+  {
+    "source": "phase7_llm_adapter",
+    "interval": 2,
+    "action": "maintain_selected_action",
+    "selected_action_setpoint_c": 27.5,
+    "fallback_used": true,
+    "fallback_reason": "ENERGY_REDUCTION_DIRECTION_INVALID"
+  },
+  {
+    "source": "phase7_llm_adapter",
+    "interval": 3,
+    "action": "reset_actuator",
+    "fallback_used": true
+  }
+]

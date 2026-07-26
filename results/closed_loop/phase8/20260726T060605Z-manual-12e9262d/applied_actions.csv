@@ -1,0 +1,14 @@
+action_id,actuator_handle,application_success,applied_value,approved_value,observed_setpoint_after_application,requested_value,reset_performed,simulation_timestamp,source_type,validation_id,verified
+action-4e8673069cd04cbc8d62765e929a00ca,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:15:00Z,manual,validation-9565eab04a314a1cbfcbe669f2cca425,True
+action-4e8673069cd04cbc8d62765e929a00ca,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:02:00Z,manual,validation-9565eab04a314a1cbfcbe669f2cca425,True
+action-4e8673069cd04cbc8d62765e929a00ca,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:04:00Z,manual,validation-9565eab04a314a1cbfcbe669f2cca425,True
+action-4e8673069cd04cbc8d62765e929a00ca,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:06:00Z,manual,validation-9565eab04a314a1cbfcbe669f2cca425,True
+action-4e8673069cd04cbc8d62765e929a00ca,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:09:00Z,manual,validation-9565eab04a314a1cbfcbe669f2cca425,True
+action-4e8673069cd04cbc8d62765e929a00ca,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:11:00Z,manual,validation-9565eab04a314a1cbfcbe669f2cca425,True
+action-4e8673069cd04cbc8d62765e929a00ca,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:13:00Z,manual,validation-9565eab04a314a1cbfcbe669f2cca425,True
+action-4e8673069cd04cbc8d62765e929a00ca,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:15:00Z,manual,validation-9565eab04a314a1cbfcbe669f2cca425,True
+action-4e8673069cd04cbc8d62765e929a00ca,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:30:00Z,manual,validation-9565eab04a314a1cbfcbe669f2cca425,True
+action-4e8673069cd04cbc8d62765e929a00ca,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:20:00Z,manual,validation-9565eab04a314a1cbfcbe669f2cca425,True
+action-4e8673069cd04cbc8d62765e929a00ca,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:25:00Z,manual,validation-9565eab04a314a1cbfcbe669f2cca425,True
+action-4e8673069cd04cbc8d62765e929a00ca,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:30:00Z,manual,validation-9565eab04a314a1cbfcbe669f2cca425,True
+action-4e8673069cd04cbc8d62765e929a00ca,416,True,23.0,23.0,23.0,23.0,False,2013-01-01T09:45:00Z,manual,validation-9565eab04a314a1cbfcbe669f2cca425,True

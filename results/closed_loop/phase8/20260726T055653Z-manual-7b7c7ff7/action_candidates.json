@@ -1,0 +1,25 @@
+[
+  {
+    "action_id": "action-2a5f1d2c475e4a1db47bd7317a592d11",
+    "source_proposal_id": null,
+    "source_type": "manual",
+    "zone_name": "SPACE1-1",
+    "actuator_identifier": "Zone Temperature Control|Cooling Setpoint|SPACE1-1",
+    "current_value_c": 22.0,
+    "requested_value_c": 23.0,
+    "requested_delta_c": 1.0,
+    "effective_from": "2013-01-01T09:15:00Z",
+    "effective_until": "2013-01-01T10:15:00Z",
+    "evidence_references": [
+      "EnergyPlusRuntime:live_telemetry"
+    ],
+    "created_at": "2013-01-01T09:15:00Z",
+    "expires_at": "2013-01-01T10:45:00Z",
+    "phase7_validated": null,
+    "confidence": null,
+    "run_id": "20260726T055653Z-manual-7b7c7ff7",
+    "objective": "maintain_comfort",
+    "control_type": "cooling_setpoint",
+    "reason": ""
+  }
+]

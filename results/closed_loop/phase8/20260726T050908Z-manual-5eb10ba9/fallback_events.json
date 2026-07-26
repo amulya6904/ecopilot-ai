@@ -1,0 +1,10 @@
+[
+  {
+    "fallback_id": "fallback-f653a3f9c2494caabea21e28a9559d97",
+    "reason_code": "MANUAL_RESET",
+    "original_action_id": "action-a0305eb7f2e549a78a4463204e84644e",
+    "fallback_value_c": 22.0,
+    "actuator_reset": true,
+    "simulation_timestamp": "2013-01-01T10:00:00Z"
+  }
+]

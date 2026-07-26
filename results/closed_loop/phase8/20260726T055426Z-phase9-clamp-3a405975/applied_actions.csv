@@ -1,0 +1,9 @@
+action_id,actuator_handle,application_success,applied_value,approved_value,observed_setpoint_after_application,requested_value,reset_performed,simulation_timestamp,source_type,validation_id,verified
+action-c73e40e562194a7a8a686322e0e95c13,416,True,23.0,23.0,22.0,23.0,False,2013-01-01T09:15:00Z,mock_agent,validation-c2ffaf163a7a4329a7e9610062223b85,False
+action-c73e40e562194a7a8a686322e0e95c13,416,True,23.0,23.0,22.0,23.0,False,2013-01-01T09:02:00Z,mock_agent,validation-c2ffaf163a7a4329a7e9610062223b85,False
+action-c73e40e562194a7a8a686322e0e95c13,416,True,23.0,23.0,22.0,23.0,False,2013-01-01T09:04:00Z,mock_agent,validation-c2ffaf163a7a4329a7e9610062223b85,False
+action-c73e40e562194a7a8a686322e0e95c13,416,True,23.0,23.0,22.0,23.0,False,2013-01-01T09:06:00Z,mock_agent,validation-c2ffaf163a7a4329a7e9610062223b85,False
+action-c73e40e562194a7a8a686322e0e95c13,416,True,23.0,23.0,22.0,23.0,False,2013-01-01T09:09:00Z,mock_agent,validation-c2ffaf163a7a4329a7e9610062223b85,False
+action-c73e40e562194a7a8a686322e0e95c13,416,True,23.0,23.0,22.0,23.0,False,2013-01-01T09:11:00Z,mock_agent,validation-c2ffaf163a7a4329a7e9610062223b85,False
+action-c73e40e562194a7a8a686322e0e95c13,416,True,23.0,23.0,22.0,23.0,False,2013-01-01T09:13:00Z,mock_agent,validation-c2ffaf163a7a4329a7e9610062223b85,False
+action-c73e40e562194a7a8a686322e0e95c13,416,True,23.0,23.0,22.0,23.0,False,2013-01-01T09:15:00Z,mock_agent,validation-c2ffaf163a7a4329a7e9610062223b85,False

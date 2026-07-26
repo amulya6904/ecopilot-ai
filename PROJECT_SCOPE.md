@@ -33,8 +33,10 @@ The final system requires:
   presentation, and a demonstration video of at most three minutes.
 
 EnergyPlus batch execution and the official fixed-schedule baseline are implemented
-in Phases 4–5. MCP, LLM, tool-calling, actuator injection, autonomous control,
-closed-loop execution, and savings comparison are not implemented.
+in Phases 4–5. Phase 6 implements bounded MCP access, Phase 7 implements the local
+advisory LLM, Phase 8 implements verified Runtime API actuator control, and Phase 9
+implements deterministic safety and recovery. The Phase 10 matched savings
+comparison is not implemented.
 
 ## Building and development scope
 
@@ -118,7 +120,7 @@ LLM cannot bypass validation or write actuators directly.
 11. Final dashboard
 12. Documentation and submission
 
-Phases 1–5 are complete under their stated classifications. Phase 5 establishes the
+Phases 1–9 are complete under their stated classifications. Phase 5 establishes the
 official fixed-schedule EnergyPlus baseline using the existing verified EnergyPlus
 example model. Original EnergyPlus zone identifiers are preserved, while display
 aliases are used for presentation. This phase does not implement MCP, an open-source
@@ -141,4 +143,35 @@ baseline-run tool. Callers cannot select paths, commands, executables, models,
 weather files, output locations, or environment values. Phase 7 is the next
 handoff for open-source LLM integration.
 
-**Next: Phase 7 — open-source LLM integration using bounded MCP tools.**
+## Implemented Phase 7 boundary
+
+Phase 7 connects a local open-source LLM to the verified Phase 6 MCP tool layer.
+Its output remains advisory. Phases 8–9 separately own executable-candidate
+conversion, deterministic safety authority, runtime application, observation,
+fallback, and recovery. Optimization results and savings comparison remain
+unimplemented.
+
+The model sees 12 read-only allowlisted tools. Strict schemas and an independent
+validator check zone identity, comfort eligibility, configured bounds, maximum
+change, heating deadband, retrieved current setpoint, evidence, occupancy source,
+and PMV availability.
+
+## Implemented Phase 8 and Phase 9 boundaries
+
+Phase 8 owns the one verified EnergyPlus cooling-setpoint actuator for `SPACE1-1`,
+its callback registration, application/reset behavior, and runtime evidence.
+Phase 9 is the mandatory deterministic authority over every executable Phase 8
+candidate. It supervises identity, freshness, telemetry health, comfort, genuine
+PMV/PPD when available, explicit temperature proxy otherwise, demand, bounds,
+deadband, hold/rate, oscillation, actuator health, post-action response, rollback,
+and emergency disablement.
+
+Phase 9 adds deterministic safety, comfort, PMV, demand, freshness, rate, and
+actuator-health supervision to the verified Phase 8 runtime-control path. PMV is
+used only when genuinely available; otherwise the system explicitly uses an
+occupied-temperature proxy. This phase validates safety intervention and recovery,
+not final optimization or savings.
+
+Phase 10 matched baseline-versus-agent comparison, percentage savings, final
+optimization, cost/carbon savings, and annual optimized results remain out of
+scope and unimplemented.

@@ -45,5 +45,11 @@ results/official/phase5_*.json
 streamlit.stdout.log
 streamlit.stderr.log
 results/audit/*.jsonl
+results/agent/phase7/*
+!results/agent/phase7/.gitkeep
+results/audit/agent_runs.jsonl
 mcp_service/logs/*
 !mcp_service/logs/.gitkeep
+results/safety/phase9/*
+!results/safety/phase9/.gitkeep
+results/audit/phase9_safety_events.jsonl

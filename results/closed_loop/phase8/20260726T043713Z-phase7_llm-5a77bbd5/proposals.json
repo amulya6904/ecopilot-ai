@@ -1,0 +1,79 @@
+[
+  {
+    "proposal_id": "phase7-d2b535120895476ebf978e8de71d2411",
+    "decision_type": "hold_current_setpoint",
+    "energyplus_zone_name": "SPACE1-1",
+    "display_zone_name": "Open Office",
+    "current_setpoint_c": 22.0,
+    "proposed_setpoint_c": 22.0,
+    "setpoint_change_c": 0.0,
+    "effective_period": {
+      "start_hour": 9,
+      "end_hour": 18,
+      "description": "Future occupied period; advisory only."
+    },
+    "objective": "reduce_energy",
+    "evidence": [
+      {
+        "source_tool": "get_official_baseline_summary",
+        "metric": "total_facility_electricity_kwh",
+        "value": 58568.21190808615,
+        "unit": "kWh",
+        "observation": "Official fixed-schedule EnergyPlus baseline total."
+      },
+      {
+        "source_tool": "get_facility_summary",
+        "metric": "peak_facility_demand_kw",
+        "value": 21.050576908787153,
+        "unit": "kW",
+        "observation": "Official EnergyPlus baseline peak facility demand."
+      },
+      {
+        "source_tool": "list_zones",
+        "metric": "eligible_occupied_non_plenum_zone",
+        "value": "SPACE1-1",
+        "unit": "zone",
+        "observation": "Selected zone is occupied, non-plenum, and included in comfort."
+      },
+      {
+        "source_tool": "get_thermostat_adherence",
+        "metric": "current_cooling_setpoint_c",
+        "value": 22.0,
+        "unit": "degC",
+        "observation": "Occupied cooling setpoint from the frozen thermostat policy."
+      },
+      {
+        "source_tool": "get_comfort_summary",
+        "metric": "temperature_compliance_percent",
+        "value": 23.225357018460464,
+        "unit": "percent",
+        "observation": "Occupied-zone temperature compliance from official evidence."
+      }
+    ],
+    "comfort_assessment": {
+      "occupancy_source": "energyplus_people_output",
+      "temperature_compliance_percent": 23.225357018460464,
+      "pmv_available": false,
+      "pmv_compliance_percent": null,
+      "risk_level": "high",
+      "limitations": [
+        "The retained People objects do not expose Fanger PMV/PPD output.",
+        "A future matched simulation and deterministic safety review are required."
+      ]
+    },
+    "expected_effect": {
+      "energy": "Potential effect only; no matched controlled simulation was run.",
+      "comfort": "Setpoint impact requires independent safety review.",
+      "demand": "Potential demand effect is not a measured savings result.",
+      "uncertainty": "No action was applied and no savings comparison was performed."
+    },
+    "confidence": 0.45,
+    "reason": "Hold the current setpoint because low comfort compliance, unavailable PMV, or incomplete telemetry leaves insufficient evidence for a safe change.",
+    "advisory_only": true,
+    "requires_safety_review": true,
+    "applied_to_energyplus": false,
+    "closed_loop": false,
+    "optimized_result": false,
+    "savings_result": false
+  }
+]

@@ -1,4 +1,4 @@
-"""Streamlit dashboard for EcoPilot AI Phases 1 through 6."""
+"""Streamlit dashboard for EcoPilot AI Phases 1 through 8."""
 
 import json
 from pathlib import Path
@@ -21,6 +21,9 @@ from energyplus.adapter.error_parser import classify_energyplus_warning
 from simulator.building import BuildingSimulator
 from ui.phase5 import render_phase5
 from ui.phase6 import render_phase6
+from ui.phase7 import render_phase7
+from ui.phase8 import phase8_complete, render_phase8
+from ui.phase9 import phase9_complete, render_phase9
 
 
 def _range_text(minimum: float, maximum: float) -> str:
@@ -70,9 +73,17 @@ def _phase_table() -> pd.DataFrame:
             "Complete" if phase5_complete else "Not run",
         ),
         ("Phase 6", "MCP Tool Layer for EnergyPlus and official baseline data", "Complete"),
-        ("Phase 7", "Open-source LLM agent", "Not started"),
-        ("Phase 8", "Closed-loop EnergyPlus execution", "Not started"),
-        ("Phase 9", "Safety, PMV, and constraints", "Not started"),
+        ("Phase 7", "Open-source LLM advisory agent over MCP", "Complete"),
+        (
+            "Phase 8",
+            "Safe closed-loop EnergyPlus control validation",
+            "Complete" if phase8_complete() else "Not run",
+        ),
+        (
+            "Phase 9",
+            "Safety, PMV, and constraints",
+            "Complete" if phase9_complete() else "Not run",
+        ),
         ("Phase 10", "Quantitative comparison", "Not started"),
         ("Phase 11", "Final dashboard", "Not started"),
         ("Phase 12", "Submission material", "Not started"),
@@ -117,9 +128,11 @@ def _render_project_status() -> None:
                 if statuses["energyplus"]["installed"] else "Unavailable"
             ),
             "Official evaluation backend": "EnergyPlus required",
-            "Open-source LLM": "Not started",
+            "Open-source LLM": "Implemented (local Ollama; advisory only)",
             "MCP tools": "Implemented (local stdio)",
-            "Closed-loop EnergyPlus control": "Not started",
+            "Closed-loop EnergyPlus control": (
+                "Validated" if phase8_complete() else "Not run"
+            ),
             "Current results": (
                 "Official EnergyPlus baseline available"
                 if official_baseline else "Development-only"
@@ -619,7 +632,7 @@ def main() -> None:
         "Phases 1–3 provide validated configuration, a repeatable lightweight "
         "development simulator, and a development benchmark. Phases 4–5 provide "
         "verified EnergyPlus execution, the official fixed-schedule baseline, "
-        "and a bounded local MCP tool layer."
+            "a bounded local MCP tool layer, and an advisory local-LLM agent."
     )
     _render_project_status()
     page = st.sidebar.radio(
@@ -630,6 +643,9 @@ def main() -> None:
             "Phase 4 EnergyPlus integration",
             "Phase 5 official EnergyPlus baseline",
             "Phase 6 MCP tool layer",
+            "Phase 7 open-source LLM agent",
+            "Phase 8 safe closed-loop control",
+            "Phase 9 safety, PMV, and constraints",
         )
     )
     if page == "Phase 1 configuration":
@@ -642,10 +658,16 @@ def main() -> None:
         render_phase4()
     elif page == "Phase 5 official EnergyPlus baseline":
         render_phase5(st)
-    else:
+    elif page == "Phase 6 MCP tool layer":
         render_phase6(st)
+    elif page == "Phase 7 open-source LLM agent":
+        render_phase7(st)
+    elif page == "Phase 8 safe closed-loop control":
+        render_phase8(st)
+    else:
+        render_phase9(st)
     st.header("Phase Status")
-    st.dataframe(_phase_table(), hide_index=True, use_container_width=True)
+    st.dataframe(_phase_table(), hide_index=True, width="stretch")
 
 
 if __name__ == "__main__":

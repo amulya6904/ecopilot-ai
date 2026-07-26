@@ -1,0 +1,31 @@
+[
+  {
+    "source": "mock_agent",
+    "interval": 1,
+    "requested_setpoint_c": 22.0,
+    "intentionally_invalid": false
+  },
+  {
+    "source": "mock_agent",
+    "interval": 2,
+    "requested_setpoint_c": 23.0,
+    "intentionally_invalid": false
+  },
+  {
+    "source": "mock_agent",
+    "interval": 3,
+    "requested_setpoint_c": 23.0,
+    "intentionally_invalid": false
+  },
+  {
+    "source": "mock_agent",
+    "interval": 4,
+    "action": "reset"
+  },
+  {
+    "source": "mock_agent",
+    "interval": 5,
+    "requested_setpoint_c": 27.0,
+    "intentionally_invalid": true
+  }
+]

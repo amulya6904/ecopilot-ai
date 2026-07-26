@@ -1,0 +1,18 @@
+[
+  {
+    "fallback_id": "fallback-c02f821366694830ba6e9511cbe78242",
+    "reason_code": "MANUAL_RESET",
+    "original_action_id": "action-69c241d956ea408991a6c47e80153886",
+    "fallback_value_c": 22.0,
+    "actuator_reset": true,
+    "simulation_timestamp": "2013-01-01T12:00:00Z"
+  },
+  {
+    "fallback_id": "fallback-ce351f8846d44cf89a4cf17f865a3c3b",
+    "reason_code": "VALIDATION_REJECTED",
+    "original_action_id": "action-d1a279d200744751bfacb58586007ed8",
+    "fallback_value_c": 22.0,
+    "actuator_reset": true,
+    "simulation_timestamp": "2013-01-01T13:00:00Z"
+  }
+]

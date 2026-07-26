@@ -1,0 +1,26 @@
+[
+  {
+    "fallback_id": "fallback-37b08cb577794b7ca9f80788705ebf84",
+    "reason_code": "AGENT_FAILURE",
+    "original_action_id": "action-2b413c1364324007a79e1c184085be35",
+    "fallback_value_c": 27.5,
+    "actuator_reset": false,
+    "simulation_timestamp": "2013-01-01T00:15:00Z"
+  },
+  {
+    "fallback_id": "fallback-1014251a99e94fd99ef572123f3bb968",
+    "reason_code": "AGENT_FAILURE",
+    "original_action_id": "action-bf07afdeb57c4ce7b3db317a458dfcbb",
+    "fallback_value_c": 27.5,
+    "actuator_reset": false,
+    "simulation_timestamp": "2013-01-01T01:00:00Z"
+  },
+  {
+    "fallback_id": "fallback-44f9057ee0c94024887869e31920f4cc",
+    "reason_code": "MANUAL_RESET",
+    "original_action_id": "action-bf07afdeb57c4ce7b3db317a458dfcbb",
+    "fallback_value_c": 27.0,
+    "actuator_reset": true,
+    "simulation_timestamp": "2013-01-01T02:00:00Z"
+  }
+]

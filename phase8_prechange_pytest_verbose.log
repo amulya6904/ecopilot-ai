@@ -1,0 +1,47 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\amuly\AppData\Local\Programs\Python\Python312\python.exe
+rootdir: C:\Users\amuly\Desktop\ecopilot-ai
+configfile: pytest.ini
+plugins: anyio-4.12.1, langsmith-0.7.37
+collecting ... collected 38 items
+
+tests/test_phase5_baseline_artifacts.py::test_successful_official_artifacts_are_stable_and_serializable PASSED [  2%]
+tests/test_phase5_baseline_artifacts.py::test_failed_run_writes_no_official_summary_and_keeps_raw_output PASSED [  5%]
+tests/test_phase5_baseline_metrics.py::test_energy_demand_comfort_pmv_and_adherence PASSED [  7%]
+tests/test_phase5_baseline_metrics.py::test_missing_pmv_is_explicitly_unavailable PASSED [ 10%]
+tests/test_phase5_baseline_metrics.py::test_missing_occupancy_uses_labelled_schedule_proxy PASSED [ 13%]
+tests/test_phase5_baseline_metrics.py::test_zero_occupied_records_are_safe PASSED [ 15%]
+tests/test_phase5_baseline_model.py::test_builder_preserves_source_and_derives_model_safely PASSED [ 18%]
+tests/test_phase5_baseline_model.py::test_required_requests_are_not_duplicated PASSED [ 21%]
+tests/test_phase5_baseline_model.py::test_unsafe_destination_is_rejected PASSED [ 23%]
+tests/test_phase5_baseline_settings.py::test_valid_defaults_and_mapping_preserve_technical_names PASSED [ 26%]
+tests/test_phase5_baseline_settings.py::test_invalid_baseline_values_are_rejected[changes0] PASSED [ 28%]
+tests/test_phase5_baseline_settings.py::test_invalid_baseline_values_are_rejected[changes1] PASSED [ 31%]
+tests/test_phase5_baseline_settings.py::test_invalid_baseline_values_are_rejected[changes2] PASSED [ 34%]
+tests/test_phase5_baseline_settings.py::test_invalid_baseline_values_are_rejected[changes3] PASSED [ 36%]
+tests/test_phase5_baseline_settings.py::test_invalid_baseline_values_are_rejected[changes4] PASSED [ 39%]
+tests/test_phase5_baseline_settings.py::test_source_and_destination_must_differ PASSED [ 42%]
+tests/test_phase5_baseline_settings.py::test_result_and_model_paths_must_be_repository_safe PASSED [ 44%]
+tests/test_phase5_baseline_settings.py::test_dataclass_remains_frozen PASSED [ 47%]
+tests/test_phase5_imports.py::test_phase5_modules_import_without_running_energyplus PASSED [ 50%]
+tests/test_phase5_imports.py::test_phase5_settings_have_one_authoritative_definition_and_singleton PASSED [ 52%]
+tests/test_phase5_imports.py::test_fresh_import_process_does_not_write_or_execute_baseline PASSED [ 55%]
+tests/test_phase5_imports.py::test_importing_app_does_not_run_or_build_baseline PASSED [ 57%]
+tests/test_phase5_imports.py::test_optional_pmv_fields_are_import_safe PASSED [ 60%]
+tests/test_phase5_normalizer.py::test_zone_identity_mapping_nulls_and_stable_sort PASSED [ 63%]
+tests/test_phase5_normalizer.py::test_facility_values_are_converted_once_not_multiplied_by_zones PASSED [ 65%]
+tests/test_phase5_normalizer.py::test_timestamp_24_hour_rolls_forward PASSED [ 68%]
+tests/test_phase5_normalizer.py::test_duplicate_facility_timestamps_are_rejected PASSED [ 71%]
+tests/test_phase5_normalizer.py::test_missing_occupancy_remains_null PASSED [ 73%]
+tests/test_phase5_reproducibility.py::test_identical_results_are_reproducible_with_unavailable_pmv PASSED [ 76%]
+tests/test_phase5_reproducibility.py::test_hash_and_energy_mismatches_are_clear PASSED [ 78%]
+tests/test_phase5_reproducibility.py::test_telemetry_shape_and_warning_mismatch_detected PASSED [ 81%]
+tests/test_phase5_runner.py::test_success_uses_phase4_runner_and_writes_official_artifacts PASSED [ 84%]
+tests/test_phase5_runner.py::test_unavailable_energyplus_fails_without_fallback PASSED [ 86%]
+tests/test_phase5_runner.py::test_model_build_failure_is_propagated PASSED [ 89%]
+tests/test_phase5_runner.py::test_missing_required_telemetry_fails PASSED [ 92%]
+tests/test_phase5_runner.py::test_energyplus_fatal_failure_is_not_classified_official PASSED [ 94%]
+tests/test_phase5_schedule_inspector.py::test_schedule_and_load_inventory_is_structured PASSED [ 97%]
+tests/test_phase5_schedule_inspector.py::test_unknown_objects_and_baseline_numbers_do_not_trigger_replacement PASSED [100%]
+
+============================= 38 passed in 4.85s ==============================

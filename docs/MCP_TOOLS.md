@@ -83,3 +83,14 @@ optional descendant-cleanup Job Object because nested Job Objects severely
 throttle EnergyPlus in some managed shells. It still uses the official
 `stdio_client` and `ClientSession` protocol APIs, and normal stdio shutdown still
 terminates the server. The server's execution lock and timeout remain active.
+
+## Phase 7 model allowlist
+
+The model receives `get_system_status`, `get_energyplus_readiness`,
+`get_official_baseline_summary`, `get_available_outputs`, `list_zones`,
+`get_zone_summary`, `get_zone_telemetry`, `get_facility_summary`,
+`get_facility_telemetry`, `get_comfort_summary`,
+`get_thermostat_adherence`, and `get_runtime_errors`.
+
+`run_official_baseline`, paths, commands, actuator access, and control application
+are excluded. Phase 7 validates each selected name and its JSON arguments.

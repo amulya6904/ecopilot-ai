@@ -2,42 +2,31 @@
 
 | Phase | Deliverable | Status |
 |---|---|---|
-| Phase 1 | Configuration and architecture foundation | Updated and complete |
+| Phase 1 | Configuration and architecture foundation | Complete |
 | Phase 2 | Lightweight development simulator | Complete |
 | Phase 3 | Lightweight fixed baseline benchmark | Complete |
 | Phase 4 | EnergyPlus execution and initial official telemetry | Complete |
 | Phase 5 | Official fixed-schedule EnergyPlus baseline | Complete |
-| Phase 6 | MCP Tool Layer for EnergyPlus and official baseline data | Complete |
-| Phase 7 | Open-source LLM agent | Not started |
-| Phase 8 | Closed-loop EnergyPlus execution | Not started |
-| Phase 9 | Safety, PMV and constraints | Not started |
-| Phase 10 | Quantitative comparison | Not started |
+| Phase 6 | Bounded local MCP layer | Complete |
+| Phase 7 | Local open-source LLM advisory agent | Complete |
+| Phase 8 | Safe closed-loop EnergyPlus Runtime API control | Complete |
+| Phase 9 | Safety supervisor, PMV/proxy comfort, demand, and recovery | Complete after acceptance run |
+| Phase 10 | Matched quantitative EnergyPlus comparison | Not started |
 | Phase 11 | Final dashboard | Not started |
 | Phase 12 | Submission material | Not started |
 
-Phase 2–3 CSVs and metrics remain development-only. Phase 4 provides verified
-EnergyPlus execution. Phase 5 derives a fixed-schedule model from the verified
-example IDF, runs a real annual EnergyPlus baseline, preserves exact technical zone
-names, maps display aliases, excludes the plenum from occupied comfort, writes
-official telemetry/summary/manifest artifacts, and verifies repeatability.
+Phase 8 owns the verified single cooling-setpoint actuator and baseline reset for
+`SPACE1-1`. Phase 9 is its mandatory deterministic authority and post-action
+verifier. Normal tests use mocks; `energyplus_runtime` and `energyplus_safety`
+markers exercise the installed EnergyPlus Python API.
 
-Verified Phase 5 availability:
+The retained EnergyPlus model exposes occupancy, temperature, humidity, setpoints,
+facility demand, and facility energy. It does not expose genuine Fanger PMV/PPD;
+Phase 9 records this explicitly and uses the occupied-temperature proxy without
+fabricating PMV.
 
-- available: facility/HVAC/cooling/heating/fan electricity, direct facility demand,
-  zone and outdoor temperature, cooling/heating setpoints, People occupancy, and
-  zone/outdoor relative humidity;
-- unavailable: PMV and PPD, because the retained People objects do not enable
-  Fanger comfort output;
-- diagnostics: two parsed non-fatal warnings, zero severe and zero fatal errors.
-
-Phase 5 establishes the official fixed-schedule EnergyPlus baseline using the
-existing verified EnergyPlus example model. Original EnergyPlus zone identifiers
-are preserved, while display aliases are used for presentation. This phase does not
-implement MCP, an open-source LLM, actuator injection, autonomous control,
-optimization, or savings comparison.
-
-Phase 6 exposes the verified EnergyPlus and official baseline capabilities through a local MCP server. The server provides bounded, validated tools and read-only resources. It does not yet include an open-source LLM, autonomous reasoning, actuator injection, optimization, or closed-loop control.
-
-It uses official `mcp==1.28.1` over stdio and implements 16 tools, six resources,
-strict structured responses, audit logging, response limits, and a controlled
-single-process baseline execution lock.
+Phase 9 adds deterministic safety, comfort, PMV, demand, freshness, rate, and
+actuator-health supervision to the verified Phase 8 runtime-control path. PMV is
+used only when genuinely available; otherwise the system explicitly uses an
+occupied-temperature proxy. This phase validates safety intervention and recovery,
+not final optimization or savings.
