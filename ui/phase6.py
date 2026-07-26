@@ -34,7 +34,6 @@ TOOL_CATALOGUE = (
 
 
 def render_phase6(st: Any) -> None:
-    st.header("Phase 6 — MCP Tool Layer")
     st.caption(
         "Local official-SDK stdio server exposing verified EnergyPlus and official "
         "baseline capabilities. It has no LLM, actuator, optimization, or control tools."
@@ -58,10 +57,10 @@ def render_phase6(st: Any) -> None:
             columns=("name", "category", "mode", "description", "input schema", "output"),
         ),
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
     )
     st.subheader("Read-only resource catalogue")
-    st.dataframe(pd.DataFrame(RESOURCE_CATALOGUE), hide_index=True, use_container_width=True)
+    st.dataframe(pd.DataFrame(RESOURCE_CATALOGUE), hide_index=True, width="stretch")
     if st.button("Run MCP Client Smoke Test", type="primary"):
         with st.spinner("Starting a separate stdio server and official SDK client..."):
             try:
@@ -84,7 +83,7 @@ def render_phase6(st: Any) -> None:
     st.subheader("Latest audit entries")
     entries = audit.latest(20)
     if entries:
-        st.dataframe(pd.DataFrame(entries), hide_index=True, use_container_width=True)
+        st.dataframe(pd.DataFrame(entries), hide_index=True, width="stretch")
     else:
         st.info("No audited MCP tool calls have been recorded yet.")
 

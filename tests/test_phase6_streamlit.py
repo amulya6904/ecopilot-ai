@@ -1,15 +1,16 @@
-"""Headless navigation verification for all Streamlit pages."""
+"""Headless navigation verification for the complete Streamlit application."""
 
 from streamlit.testing.v1 import AppTest
 
+from ui.navigation import PAGE_DEFINITIONS
 
-def test_all_nine_streamlit_pages_render_without_exceptions():
-    app = AppTest.from_file("app.py", default_timeout=30)
+
+def test_all_streamlit_pages_render_without_exceptions():
+    app = AppTest.from_file("app.py", default_timeout=60)
     app.run()
     assert not app.exception
-    navigation = app.sidebar.radio[0]
-    assert len(navigation.options) == 9
-    for page in navigation.options:
-        navigation.set_value(page)
-        app.run()
-        assert not app.exception, f"Streamlit page failed: {page}"
+    assert len(PAGE_DEFINITIONS) == 15
+    app.sidebar.toggle[0].set_value(True).run()
+    for page in PAGE_DEFINITIONS:
+        app.switch_page(page.path).run(timeout=60)
+        assert not app.exception, f"Streamlit page failed: {page.path}"

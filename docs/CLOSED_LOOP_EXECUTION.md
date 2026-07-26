@@ -24,3 +24,22 @@ the nearby safe value is independently checked and then passed to Phase 8.
 
 No lightweight simulation is substituted for a requested EnergyPlus runtime run.
 No final baseline-versus-agent comparison is performed.
+
+## Phase 10 annual loop
+
+The final sentence above describes the Phase 8–9 validation boundary. Phase 10 now
+adds the separate annual evaluation and comparison workflow:
+
+```text
+hourly EnergyPlus evidence
+  -> deterministic demand/comfort opportunity
+  -> Phase 9 decision
+  -> Phase 8 apply or reset
+  -> linked observation and post-action verification
+  -> continue for the complete annual horizon
+  -> normalize and compare only after EnergyPlus exits cleanly
+```
+
+The accepted run completed 8,760 hourly reporting intervals, recorded 1,090 safety
+decisions and 680 actuator writes, and produced zero rollbacks, severe errors, or
+fatal errors. Fallback/reset counts remain visible in reliability artifacts.

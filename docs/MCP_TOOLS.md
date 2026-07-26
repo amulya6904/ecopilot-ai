@@ -94,3 +94,16 @@ The model receives `get_system_status`, `get_energyplus_readiness`,
 
 `run_official_baseline`, paths, commands, actuator access, and control application
 are excluded. Phase 7 validates each selected name and its JSON arguments.
+
+## Phase 10 evidence use
+
+The default reproducible Phase 10 controller reads live EnergyPlus Runtime API
+telemetry and does not invoke MCP from inside callbacks. Optional LLM-assisted
+mode may retrieve official evidence before the simulation begins; callback
+execution remains bounded and local. Phase 10 reliability metrics therefore
+report MCP calls/failures separately and honestly show zero for the accepted
+deterministic run.
+
+The comparison loader reads Phase 5 manifests and normalized products directly;
+it does not expose a new path-selecting MCP tool and cannot promote development
+simulator data.

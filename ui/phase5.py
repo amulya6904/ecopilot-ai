@@ -15,6 +15,8 @@ from energyplus.baseline.manifest import calculate_sha256
 from energyplus.baseline.reproducibility import compare_baseline_runs
 from energyplus.baseline.runner import run_energyplus_baseline
 from energyplus.baseline.settings import ENERGYPLUS_BASELINE
+from .artifact_views import PROJECT_ROOT
+from .formatting import project_relative
 
 
 def _aggregate_zone(frame: pd.DataFrame, selection: str) -> pd.DataFrame:
@@ -112,7 +114,6 @@ def render_phase5(st: Any) -> None:
         metadata_root=settings.resolve(settings.metadata_root),
     )
     status = discover_energyplus(discovery_settings)
-    st.header("Phase 5 — Official EnergyPlus Baseline")
     st.write(
         "This page runs the conventional fixed-schedule EnergyPlus benchmark. "
         "It provides the official reference case for future autonomous control. "
@@ -332,7 +333,11 @@ def render_phase5(st: Any) -> None:
         st.json(asdict(report))
     st.subheader("Official artifacts")
     artifact_table = pd.DataFrame([
-        {"Artifact": name, "Path": str(path), "Exists": path.is_file()}
+        {
+            "Artifact": name,
+            "Path": project_relative(path, PROJECT_ROOT),
+            "Exists": path.is_file(),
+        }
         for name, path in result.artifact_paths.items()
     ])
     st.dataframe(artifact_table, hide_index=True, width="stretch")

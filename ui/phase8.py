@@ -18,6 +18,8 @@ from energyplus.runtime_control.orchestrator import (
     run_mock_closed_loop,
 )
 from energyplus.runtime_control.settings import PHASE8_SETTINGS
+from .artifact_views import PROJECT_ROOT
+from .formatting import project_relative
 
 
 def _latest_run() -> tuple[Path | None, dict[str, Any] | None]:
@@ -64,12 +66,15 @@ def _execute(st: Any, label: str, function: Callable[[], Any]) -> None:
                 state=state,
             )
         except Exception as exc:
-            st.exception(exc)
+            st.error(
+                f"{label} failed. No further runtime action was applied."
+            )
+            with st.expander("Technical diagnostics"):
+                st.code(f"{type(exc).__name__}: {exc}", language="text")
             status.update(label=f"{label}: failed", state="error")
 
 
 def render_phase8(st: Any) -> None:
-    st.header("Phase 8 — Safe Closed-Loop EnergyPlus Control")
     st.warning(
         "This phase validates bounded control injection and fallback. It is not "
         "an optimization result and does not establish energy savings."
@@ -99,8 +104,9 @@ def render_phase8(st: Any) -> None:
     cards[5].metric("Phase 8", "Complete" if phase8_complete() else "Incomplete")
     st.write(
         {
-            "runtime_model": str(
-                PHASE8_SETTINGS.resolve(PHASE8_SETTINGS.runtime_model_path)
+            "runtime_model": project_relative(
+                PHASE8_SETTINGS.resolve(PHASE8_SETTINGS.runtime_model_path),
+                PROJECT_ROOT,
             ),
             "selected_actuator": selected.get("identifier", "Not discovered"),
             "component_type": selected.get("component_type"),

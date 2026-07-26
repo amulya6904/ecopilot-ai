@@ -9,8 +9,11 @@ __pycache__/
 test-results/
 coverage.xml
 htmlcov/
-.streamlit/
+.streamlit/*
+!.streamlit/config.toml
 .env
+.env.*
+!.env.example
 *.db
 *.sqlite
 *.sqlite3
@@ -44,6 +47,9 @@ results/official/phase5_*.json
 !results/official/.gitkeep
 streamlit.stdout.log
 streamlit.stderr.log
+streamlit*.log
+.streamlit*.log
+pytest_diagnostic.log
 results/audit/*.jsonl
 results/agent/phase7/*
 !results/agent/phase7/.gitkeep
@@ -53,3 +59,7 @@ mcp_service/logs/*
 results/safety/phase9/*
 !results/safety/phase9/.gitkeep
 results/audit/phase9_safety_events.jsonl
+results/closed_loop/phase8/*
+!results/closed_loop/phase8/.gitkeep
+results/comparison/phase10/*
+!results/comparison/phase10/.gitkeep

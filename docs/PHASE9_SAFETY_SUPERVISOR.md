@@ -39,3 +39,16 @@ post-action, rollback, emergency, fault, runtime-error, configuration, metadata,
 and summary artifacts beneath `results/safety/phase9/<run-id>/`. The summary
 classification is `safety_supervised_energyplus_runtime_validation`; optimization
 and savings flags are always false.
+
+## Phase 10 authority
+
+Phase 10 does not weaken or replace Phase 9. The annual deterministic policy emits
+the same strict `ExecutableActionCandidate`, Phase 9 evaluates it with live
+EnergyPlus state, and only `approve` or independently safe clamp outcomes can
+reach Phase 8. Hold/reject/fallback/emergency outcomes retain baseline control.
+The Phase 10 comparison reads the persisted safety decisions, rules, rollbacks,
+and emergencies to calculate intervention and recovery metrics.
+
+Savings eligibility additionally requires `safety_supervisor_enabled = true`,
+verified control injection, no emergency comfort breach, complete telemetry,
+zero severe/fatal errors, and a passed comfort gate.

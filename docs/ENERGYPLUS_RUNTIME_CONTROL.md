@@ -23,3 +23,17 @@ from the value observed after baseline reset. Every observed applied event recei
 
 Phase 8 validates runtime control injection and reset only. It is not a savings or
 optimization result.
+
+## Phase 10 complete-horizon use
+
+Phase 10 reuses this exact callback, handle registry, one actuator-write site,
+observation linkage, and reset path for an annual controlled evaluation. The
+default provider evaluates live EnergyPlus occupancy, `SPACE1-1` temperature,
+current cooling setpoint, and facility demand once per simulation hour. It requests
+a 0.5°C increase only when the configured demand trigger and measured comfort
+headroom both pass. Phase 9 remains final authority.
+
+For quantitative comparison, `run_phase8_runtime(..., generate_csv=True)` invokes
+ReadVarsESO with a new RVI bound explicitly to that run's ESO and CSV paths. This
+prevents telemetry from being redirected to another run. Default Phase 8
+validation behavior is unchanged.

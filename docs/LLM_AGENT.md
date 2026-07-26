@@ -1,65 +1,161 @@
-# Phase 7 Local LLM Agent
+# Local LLM, prompt, and latency design
 
-Phase 7 connects a local open-source LLM to the verified Phase 6 MCP tool layer.
-The agent retrieves official EnergyPlus evidence and produces a validated advisory
-proposal. The Phase 7 component cannot write actuators. Phases 8–9 separately own
-candidate conversion, deterministic safety authority, and runtime execution.
-Optimization results and savings comparison remain unimplemented.
+## Role
 
-## Setup
+Phase 7 uses `qwen3:4b` through a local Ollama service. It demonstrates bounded
+evidence use and compact structured advice. It does not apply a setpoint,
+control EnergyPlus, certify safety, or produce the official Phase 10 savings.
 
-Install and start Ollama, then inspect readiness:
+The LLM never has direct actuator authority. Its output must pass Pydantic
+parsing, deterministic validation, and the Phase 9 supervisor before it can
+even become a runtime candidate.
+
+## Local inference boundary
+
+- Provider: Ollama
+- Model: `qwen3:4b`
+- Allowed host: loopback only
+- Thinking mode: disabled
+- Streaming: disabled for the structured request
+- Network requirement: none after the model is installed
+- Remote providers: unsupported
+
+Run the readiness check without restarting an already listening Ollama service:
 
 ```powershell
+ollama ps
+ollama run qwen3:4b --think=false "Reply with only ready"
 python -m scripts.check_ollama
 ```
 
-The configured default is `qwen3:4b`. Model files consume local disk, memory, and
-download bandwidth, so the project never downloads one automatically. After
-reviewing those costs, install it with `ollama pull qwen3:4b`, or select an
-already-installed model:
+## MCP evidence discovery
 
-```powershell
-$env:ECOPILOT_LLM_MODEL = "llama3.2:latest"
-python -m scripts.run_phase7_agent
+The agent is permitted to use a fixed allowlist of read-only local MCP tools.
+Required official EnergyPlus evidence is retrieved through a deterministic
+plan. Each result retains source and classification metadata, and telemetry is
+bounded by row and character limits before it enters model context.
+
+This design preserves auditable MCP evidence while avoiding a slow preliminary
+tool-selection generation on the live CPU path.
+
+## Prompt structure
+
+The final proposal call contains exactly two messages:
+
+1. a compact system prompt stating role, prohibited claims, allowed semantics,
+   output contract, and evidence discipline;
+2. a compact user prompt containing only the bounded official evidence needed
+   for this decision.
+
+The complete tool-calling conversation is not reused for final generation. The
+request provides the Pydantic JSON schema directly and includes no tools:
+
+```python
+{
+    "model": "qwen3:4b",
+    "messages": compact_messages,
+    "format": LLMDecision.model_json_schema(),
+    "stream": False,
+    "think": False,
+    "keep_alive": "10m",
+    "options": {
+        "temperature": 0,
+        "num_predict": 192,
+        "num_ctx": 4096,
+    },
+}
 ```
 
-`OLLAMA_HOST` must resolve to localhost. Timeout, temperature, tool rounds, and
-retry count are controlled by the environment variables in `llm/settings.py`.
+The model emits only zone, proposed setpoint, objective, confidence, and
+reason. Python adds IDs, timestamps, source classification, evidence links, and
+validation metadata. Hidden chain-of-thought is not requested, displayed, or
+stored.
 
-## Workflow
+## Structured schema
 
-The agent starts Phase 6 over local stdio, initializes the official MCP client,
-discovers tools, filters them through a 12-tool read-only allowlist, and converts
-their schemas to Ollama tool definitions. It validates selected names and
-arguments, calls MCP, bounds tool results, and returns them only as tool messages.
+The compact output shape is:
 
-The final response must match the strict `ControlProposal` schema. An independent
-validator checks zone and alias, occupied/non-plenum role, comfort inclusion,
-current setpoint evidence, cooling limits, maximum change, heating deadband,
-evidence provenance, occupancy source, and PMV availability. Invalid proposals
-receive at most two correction attempts.
+```json
+{
+  "energyplus_zone_name": "SPACE1-1",
+  "proposed_setpoint_c": 22.5,
+  "objective": "reduce_peak_demand",
+  "confidence": 0.65,
+  "reason": "A conservative adjustment may reduce cooling demand while preserving comfort."
+}
+```
 
-Tool results are capped at 20,000 characters and context at 50,000 characters.
-Ollama calls have a configurable 300-second default timeout for CPU-only model
-loading and prompt evaluation. Compact audit
-metadata goes to `results/audit/agent_runs.jsonl`; detailed advisory artifacts go
-under `results/agent/phase7/<run-id>/`.
+Malformed, extra-authority, unsupported, or unsafe output fails deterministic
+validation. A model response is never assumed to be trustworthy merely because
+it is valid JSON.
 
-The proposal is qualitative. It does not establish causality, quantify reduction,
-prove comfort preservation, or apply control. Phase 8 requires separately
-authorized safety and runtime integration.
+## Live latency limits
 
-## Phase 9 execution boundary
+The existing environment settings define practical CPU-demo limits:
 
-The Phase 7 model remains advisory. A structured proposal is normalized into a
-Phase 8 executable candidate and then evaluated by the Phase 9 deterministic
-safety supervisor. Model confidence cannot override any failed rule, and raw model
-content cannot call `set_actuator_value`. A timeout or invalid proposal selects a
-deterministic fallback candidate that is still subject to Phase 9.
+```text
+ECOPILOT_LLM_THINK=false
+ECOPILOT_LLM_TIMEOUT_SECONDS=180
+ECOPILOT_LLM_FINAL_TIMEOUT_SECONDS=180
+ECOPILOT_AGENT_RUN_TIMEOUT_SECONDS=360
+ECOPILOT_AGENT_MAX_TOOL_ROUNDS=4
+ECOPILOT_AGENT_MAX_RETRIES=1
+ECOPILOT_LLM_NUM_PREDICT=192
+ECOPILOT_LLM_NUM_CTX=4096
+```
 
-Phase 9 adds deterministic safety, comfort, PMV, demand, freshness, rate, and
-actuator-health supervision to the verified Phase 8 runtime-control path. PMV is
-used only when genuinely available; otherwise the system explicitly uses an
-occupied-temperature proxy. This phase validates safety intervention and recovery,
-not final optimization or savings.
+Latency is divided into:
+
+- Ollama readiness;
+- initial tool-selection inference, when that optional mode is used;
+- deterministic MCP evidence retrieval;
+- final structured generation;
+- Python validation;
+- total agent duration.
+
+These values are recorded in `run_metadata.json`. The verified local run shows
+that final structured generation dominates total latency; exact duration is
+hardware-dependent and must not be presented as a universal benchmark.
+
+## Timeout and fallback behavior
+
+Each request has an inner timeout and the complete agent run has an outer
+timeout. On outer timeout, the result uses `AGENT_RUN_TIMEOUT` and the UI states:
+
+> The local CPU model did not finish within 6 minutes. No action was applied.
+
+The progress view exits instead of leaving a spinner active. MCP failure,
+missing required evidence, schema failure, and validation failure have distinct
+typed outcomes. Any deterministic fallback is explicitly labeled as fallback,
+not as successful LLM output.
+
+## Why the LLM is outside callbacks
+
+EnergyPlus runtime callbacks must be bounded and deterministic enough to avoid
+stalling simulation physics. Local inference can vary with CPU load, memory
+pressure, model warmth, and thermal throttling, so the agent runs asynchronously
+outside the callback. The callback receives only a prevalidated candidate or a
+deterministic policy decision, then performs telemetry, safety, handle, write,
+and observation work.
+
+## Why Phase 10 uses a deterministic policy
+
+The final annual comparison must be repeatable and practical on local CPU
+hardware. `reproducible_policy` exercises the real actuator, the same Phase 9
+safety authority, fallback behavior, telemetry alignment, and EnergyPlus
+physics without introducing model-latency nondeterminism into 8,760 hourly
+intervals.
+
+Therefore:
+
+- Phase 7 proves local qwen3:4b advisory capability;
+- Phases 8–9 prove safe real actuator control;
+- Phase 10 measures the deterministic safety-supervised policy;
+- no claim is made that qwen3:4b generated the measured savings.
+
+## Scope disclosure
+
+Local inference latency is hardware-dependent. The retained proof of concept
+controls one zone and is not a real-building deployment or production safety
+certification. Future work includes faster local hardware, multi-zone
+coordination, and native PMV evidence while preserving the same trust boundary.

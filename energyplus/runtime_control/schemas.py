@@ -32,7 +32,13 @@ class RuntimeTelemetrySnapshot(StrictRuntimeModel):
 class ExecutableActionCandidate(StrictRuntimeModel):
     action_id: str = Field(min_length=1)
     source_proposal_id: str | None
-    source_type: Literal["manual", "mock_agent", "phase7_llm", "fallback"]
+    source_type: Literal[
+        "manual",
+        "mock_agent",
+        "phase7_llm",
+        "fallback",
+        "reproducible_policy",
+    ]
     zone_name: str = Field(min_length=1)
     actuator_identifier: str = Field(min_length=1)
     current_value_c: float
@@ -100,7 +106,13 @@ class AppliedControlEvent(StrictRuntimeModel):
     application_success: bool
     observed_setpoint_after_application: float | None
     reset_performed: bool
-    source_type: Literal["manual", "mock_agent", "phase7_llm", "fallback"]
+    source_type: Literal[
+        "manual",
+        "mock_agent",
+        "phase7_llm",
+        "fallback",
+        "reproducible_policy",
+    ]
     validation_id: str
     verified: bool = False
 

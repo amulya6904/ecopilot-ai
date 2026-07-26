@@ -1,4 +1,4 @@
-"""Streamlit dashboard for EcoPilot AI Phases 1 through 8."""
+"""Streamlit dashboard for EcoPilot AI Phases 1 through 10."""
 
 import json
 from pathlib import Path
@@ -24,6 +24,11 @@ from ui.phase6 import render_phase6
 from ui.phase7 import render_phase7
 from ui.phase8 import phase8_complete, render_phase8
 from ui.phase9 import phase9_complete, render_phase9
+from ui.phase10 import phase10_complete, render_phase10
+from ui.constants import PROJECT_SUBTITLE, PROJECT_TITLE
+from ui.navigation import build_navigation
+from ui.artifact_views import PROJECT_ROOT
+from ui.formatting import project_relative
 
 
 def _range_text(minimum: float, maximum: float) -> str:
@@ -84,9 +89,12 @@ def _phase_table() -> pd.DataFrame:
             "Safety, PMV, and constraints",
             "Complete" if phase9_complete() else "Not run",
         ),
-        ("Phase 10", "Quantitative comparison", "Not started"),
-        ("Phase 11", "Final dashboard", "Not started"),
-        ("Phase 12", "Submission material", "Not started"),
+        (
+            "Phase 10",
+            "Official quantitative comparison and submission readiness",
+            "Complete" if phase10_complete() else "Not run",
+        ),
+        ("Phase 11", "Final dashboard and submission package", "Complete"),
     ]
     return pd.DataFrame(phases, columns=("Phase", "Focus", "Status"))
 
@@ -142,7 +150,6 @@ def _render_project_status() -> None:
 
 def render_phase1() -> None:
     """Render the frozen Phase 1 configuration."""
-    st.header("Phase 1 — Configuration")
     st.success("Phase 1 setup and requirement freezing are complete.")
     duration_hours = SIMULATION.end_hour - SIMULATION.start_hour
     horizon_minutes = SIMULATION.step_minutes * SIMULATION.prediction_horizon_steps
@@ -234,12 +241,11 @@ def render_phase1() -> None:
 def _chart(frame: pd.DataFrame, value: str, title: str) -> None:
     st.subheader(title)
     chart_data = frame.pivot(index="timestamp", columns="zone_id", values=value)
-    st.line_chart(chart_data, use_container_width=True)
+    st.line_chart(chart_data, width="stretch")
 
 
 def render_phase2() -> None:
     """Render an on-demand full-day simulator validation."""
-    st.header("Phase 2 — Lightweight Development Simulator")
     st.write("**Data source:** Lightweight Development Simulator")
     st.write(
         "This lightweight development digital twin models weather, occupancy, temperature, "
@@ -284,7 +290,7 @@ def render_phase2() -> None:
 
     st.subheader("Latest zone states")
     latest = frame.sort_values("timestamp").groupby("zone_id", as_index=False).tail(1)
-    st.dataframe(latest, hide_index=True, use_container_width=True)
+    st.dataframe(latest, hide_index=True, width="stretch")
     _chart(frame, "indoor_temperature_c", "Indoor temperature by zone")
     _chart(frame, "occupancy", "Occupancy by zone")
     _chart(frame, "co2_ppm", "CO2 by zone")
@@ -304,12 +310,11 @@ def _plot_zone_line(
         frame, x="timestamp", y=value, color="zone_id",
         title=title, labels={value: y_label, "timestamp": "Time", "zone_id": "Zone"},
     )
-    st.plotly_chart(figure, use_container_width=True)
+    st.plotly_chart(figure, width="stretch")
 
 
 def render_phase3() -> None:
     """Render the conventional fixed-schedule baseline benchmark."""
-    st.header("Phase 3 — Fixed Baseline Controller")
     st.write("**Data source:** Lightweight Development Simulator")
     st.warning(
         "This is a development benchmark. Final baseline savings claims must use "
@@ -364,7 +369,7 @@ def render_phase3() -> None:
             "Ventilation": BASELINE.unoccupied_ventilation,
         },
     ])
-    st.dataframe(schedule, hide_index=True, use_container_width=True)
+    st.dataframe(schedule, hide_index=True, width="stretch")
 
     _plot_zone_line(results, "hvac_setpoint_c", "HVAC setpoint by zone", "Setpoint (°C)")
     _plot_zone_line(results, "fan_speed_percent", "Fan speed by zone", "Fan speed (%)")
@@ -396,24 +401,24 @@ def render_phase3() -> None:
             by_time, x="timestamp", y=value, title=title,
             labels={"timestamp": "Time", value: label},
         )
-        st.plotly_chart(figure, use_container_width=True)
+        st.plotly_chart(figure, width="stretch")
     energy_bar = px.bar(
         zone_summary, x="zone_name", y="total_energy_kwh",
         title="Total energy by zone",
         labels={"zone_name": "Zone", "total_energy_kwh": "Energy (kWh)"},
     )
-    st.plotly_chart(energy_bar, use_container_width=True)
+    st.plotly_chart(energy_bar, width="stretch")
 
     st.subheader("Latest zone states")
     latest = results.sort_values("timestamp").groupby("zone_id", as_index=False).tail(1)
-    st.dataframe(latest.round(2), hide_index=True, use_container_width=True)
+    st.dataframe(latest.round(2), hide_index=True, width="stretch")
     st.subheader("Zone-wise development baseline summary")
-    st.dataframe(zone_summary.round(2), hide_index=True, use_container_width=True)
+    st.dataframe(zone_summary.round(2), hide_index=True, width="stretch")
     st.subheader("Schedule-boundary samples")
     boundary = results[
         results["timestamp"].dt.strftime("%H:%M").isin(["08:00", "09:00", "18:00"])
     ][["timestamp", "zone_id", "hvac_setpoint_c", "fan_speed_percent", "ventilation_level"]]
-    st.dataframe(boundary, hide_index=True, use_container_width=True)
+    st.dataframe(boundary, hide_index=True, width="stretch")
 
     first, second = st.columns(2)
     first.download_button(
@@ -440,7 +445,6 @@ def render_phase3() -> None:
 
 def render_phase4() -> None:
     """Render EnergyPlus readiness and on-demand Phase 4 batch validation."""
-    st.header("Phase 4 — EnergyPlus Integration")
     st.write(
         "This phase validates the installed EnergyPlus engine, configured IDF and "
         "EPW inputs, batch execution, diagnostics, and initial EnergyPlus-derived "
@@ -459,13 +463,15 @@ def render_phase4() -> None:
     )
     st.subheader("Configuration")
     st.write({
-        "EnergyPlus home": str(status.installation_dir or ENERGYPLUS.installation_dir),
-        "Executable": str(status.executable_path or ENERGYPLUS.executable_path),
-        "IDD": str(status.idd_path or ENERGYPLUS.idd_path),
+        "EnergyPlus home": "Configured locally" if status.installed else "Not detected",
+        "Executable": (
+            (status.executable_path or ENERGYPLUS.executable_path).name
+        ),
+        "IDD": (status.idd_path or ENERGYPLUS.idd_path).name,
         "Executable found": status.executable_found,
         "IDD found": status.idd_found,
-        "IDF": str(ENERGYPLUS.base_model_path),
-        "EPW": str(ENERGYPLUS.weather_file_path),
+        "IDF": project_relative(ENERGYPLUS.base_model_path, PROJECT_ROOT),
+        "EPW": project_relative(ENERGYPLUS.weather_file_path, PROJECT_ROOT),
         "Model ready": status.model_exists,
         "Weather ready": status.weather_exists,
         "Full run readiness": status.ready_for_run,
@@ -519,7 +525,7 @@ def render_phase4() -> None:
         "Warnings": result.warning_count,
         "Severe errors": result.severe_count,
         "Fatal errors": result.fatal_count,
-        "Output directory": str(result.output_dir),
+        "Output directory": project_relative(result.output_dir, PROJECT_ROOT),
         "Backend": result.backend,
         "Classification": result.classification,
         "Official EnergyPlus-derived result": result.official_result,
@@ -564,7 +570,7 @@ def render_phase4() -> None:
             "Reporting frequency": summary.reporting_frequency,
         })
     if not telemetry.empty:
-        st.dataframe(telemetry.head(500), hide_index=True, use_container_width=True)
+        st.dataframe(telemetry.head(500), hide_index=True, width="stretch")
         zone_chart = px.line(
             telemetry,
             x="timestamp",
@@ -572,7 +578,7 @@ def render_phase4() -> None:
             color="zone_name",
             title="EnergyPlus zone mean air temperatures",
         )
-        st.plotly_chart(zone_chart, use_container_width=True)
+        st.plotly_chart(zone_chart, width="stretch")
     if not building_telemetry.empty:
         for value, title, label in (
             (
@@ -599,7 +605,7 @@ def render_phase4() -> None:
                     title=title,
                     labels={value: label, "timestamp": "Time"},
                 )
-                st.plotly_chart(chart, use_container_width=True)
+                st.plotly_chart(chart, width="stretch")
     errors = st.session_state.get("phase4_errors", [])
     warnings = [item for item in errors if item.severity == "warning"]
     if warnings:
@@ -613,7 +619,7 @@ def render_phase4() -> None:
                 for item in warnings
             ]),
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
 
 
@@ -624,50 +630,26 @@ def main() -> None:
             "Streamlit is required to launch the dashboard. "
             "Install the dependencies from requirements.txt."
         )
-    st.set_page_config(page_title="EcoPilot AI", page_icon="🏢", layout="wide")
-    st.title("EcoPilot AI")
-    st.subheader("Autonomous Smart Building Energy and Comfort Optimization")
-    st.write(
-        "EcoPilot AI is being developed as a safe, predictive HVAC platform. "
-        "Phases 1–3 provide validated configuration, a repeatable lightweight "
-        "development simulator, and a development benchmark. Phases 4–5 provide "
-        "verified EnergyPlus execution, the official fixed-schedule baseline, "
-            "a bounded local MCP tool layer, and an advisory local-LLM agent."
+    st.set_page_config(
+        page_title=f"{PROJECT_TITLE} | {PROJECT_SUBTITLE}",
+        page_icon=":material/energy_savings_leaf:",
+        layout="wide",
+        initial_sidebar_state="expanded",
     )
-    _render_project_status()
-    page = st.sidebar.radio(
-        "Navigate", (
-            "Phase 1 configuration",
-            "Phase 2 lightweight simulator",
-            "Phase 3 development baseline",
-            "Phase 4 EnergyPlus integration",
-            "Phase 5 official EnergyPlus baseline",
-            "Phase 6 MCP tool layer",
-            "Phase 7 open-source LLM agent",
-            "Phase 8 safe closed-loop control",
-            "Phase 9 safety, PMV, and constraints",
+    st.session_state.setdefault("judge_mode", False)
+    page = build_navigation(st)
+    with st.sidebar:
+        st.divider()
+        st.toggle(
+            "Judge mode",
+            key="judge_mode",
+            help=(
+                "Show concise summaries for Phases 1–9. Phase 10 remains fully "
+                "expanded because it contains the final evidence."
+            ),
         )
-    )
-    if page == "Phase 1 configuration":
-        render_phase1()
-    elif page == "Phase 2 lightweight simulator":
-        render_phase2()
-    elif page == "Phase 3 development baseline":
-        render_phase3()
-    elif page == "Phase 4 EnergyPlus integration":
-        render_phase4()
-    elif page == "Phase 5 official EnergyPlus baseline":
-        render_phase5(st)
-    elif page == "Phase 6 MCP tool layer":
-        render_phase6(st)
-    elif page == "Phase 7 open-source LLM agent":
-        render_phase7(st)
-    elif page == "Phase 8 safe closed-loop control":
-        render_phase8(st)
-    else:
-        render_phase9(st)
-    st.header("Phase Status")
-    st.dataframe(_phase_table(), hide_index=True, width="stretch")
+        st.caption("Offline · local evidence · no automatic simulation runs")
+    page.run()
 
 
 if __name__ == "__main__":

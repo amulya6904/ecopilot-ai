@@ -15,6 +15,8 @@ from llm.mcp_client import MODEL_TOOL_ALLOWLIST
 from llm.prompts import DEFAULT_AGENT_TASK, PROMPT_VERSION
 from llm.schemas import AgentRunResult
 from llm.settings import LLM_SETTINGS
+from .artifact_views import PROJECT_ROOT
+from .formatting import project_relative
 
 
 def _timeout_result(agent: AdvisoryAgent, elapsed_ms: float) -> AgentRunResult:
@@ -91,10 +93,15 @@ async def _run_with_timeout(
 
 
 def render_phase7(st: Any) -> None:
-    st.header("Phase 7 — Open-Source LLM Agent")
     st.warning(
         "This workflow produces one advisory proposal. It cannot apply a setpoint, "
         "modify EnergyPlus, execute closed-loop control, or report optimization or savings."
+    )
+    st.info(
+        "Local qwen3:4b inference latency is hardware-dependent. The model runs "
+        "outside EnergyPlus callbacks, receives bounded evidence, and has no "
+        "direct actuator authority.",
+        icon=":material/schedule:",
     )
     readiness = OllamaClient(LLM_SETTINGS).discover()
     status = st.columns(6)
@@ -235,7 +242,11 @@ def render_phase7(st: Any) -> None:
     st.json({
         "agent_run_id": result.agent_run_id,
         "proposal_id": proposal.proposal_id if proposal else None,
-        "artifact_path": result.artifact_directory,
+        "artifact_path": (
+            project_relative(result.artifact_directory, PROJECT_ROOT)
+            if result.artifact_directory
+            else None
+        ),
         "latency_seconds": round(st.session_state.get("phase7_latency_seconds", 0), 3),
         "model": result.model,
         "prompt_version": result.prompt_version,

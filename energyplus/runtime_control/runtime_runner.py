@@ -2,6 +2,7 @@
 
 from dataclasses import asdict, dataclass
 from pathlib import Path
+import subprocess
 from typing import Any
 
 from energyplus.adapter.error_parser import parse_energyplus_error_file
@@ -44,6 +45,58 @@ def _selected_descriptor(inventory: dict[str, Any]) -> ActuatorDescriptor:
     )
 
 
+def _create_run_local_csv(
+    output: Path,
+    settings: Phase8Settings,
+) -> Path:
+    """Run ReadVarsESO with an explicit RVI bound to this runtime directory."""
+
+    installation = Path(settings.installation_root)
+    candidates = (
+        installation / "PostProcess" / "ReadVarsESO.exe",
+        installation / "ReadVarsESO.exe",
+        installation / "PostProcess" / "ReadVarsESO",
+        installation / "ReadVarsESO",
+    )
+    executable = next(
+        (candidate for candidate in candidates if candidate.is_file()),
+        None,
+    )
+    if executable is None:
+        raise RuntimeError(
+            "ReadVarsESO is required for a complete controlled telemetry CSV."
+        )
+    eso_path = output / "eplusout.eso"
+    csv_path = output / "eplusout.csv"
+    if not eso_path.is_file():
+        raise RuntimeError("Controlled EnergyPlus run did not produce eplusout.eso.")
+    rvi_path = output / "eplusout.rvi"
+    rvi_path.write_text(
+        f"{eso_path.resolve()}\n{csv_path.resolve()}\n",
+        encoding="utf-8",
+    )
+    process = subprocess.run(
+        [str(executable), str(rvi_path), "unlimited"],
+        cwd=output,
+        capture_output=True,
+        text=True,
+        timeout=180,
+        check=False,
+        shell=False,
+    )
+    (output / "readvars.stdout.log").write_text(
+        process.stdout, encoding="utf-8"
+    )
+    (output / "readvars.stderr.log").write_text(
+        process.stderr, encoding="utf-8"
+    )
+    if process.returncode != 0 or not csv_path.is_file():
+        raise RuntimeError(
+            f"ReadVarsESO failed for the controlled run (exit={process.returncode})."
+        )
+    return csv_path
+
+
 def run_phase8_runtime(
     provider: ActionProvider,
     *,
@@ -52,6 +105,8 @@ def run_phase8_runtime(
     real_llm_used: bool = False,
     inventory: dict[str, Any] | None = None,
     settings: Phase8Settings = PHASE8_SETTINGS,
+    generate_csv: bool = False,
+    require_provider_completion: bool = True,
 ) -> Phase8RunResult:
     inventory_result = inventory or discover_available_actuators(settings)
     if not inventory_result.get("success"):
@@ -93,13 +148,18 @@ def run_phase8_runtime(
         str(output),
         "-w",
         str(settings.resolve(settings.weather_file_path)),
-        str(settings.resolve(settings.runtime_model_path)),
     ]
+    args.append(str(settings.resolve(settings.runtime_model_path)))
     exit_code = -1
     try:
         exit_code = int(api.runtime.run_energyplus(state, args))
     finally:
         api.state_manager.delete_state(state)
+    csv_path = (
+        _create_run_local_csv(output, settings)
+        if generate_csv and exit_code == 0
+        else None
+    )
     error_summary = parse_energyplus_error_file(output / "eplusout.err")
     artifacts.runtime_errors = [asdict(item) for item in error_summary.records]
     state_summary = callback_handler.state
@@ -135,7 +195,11 @@ def run_phase8_runtime(
     summary = {
         "success": (
             exit_code == 0
-            and provider.complete
+            and (
+                provider.complete
+                if require_provider_completion
+                else True
+            )
             and not state_summary.callback_errors
             and error_summary.severe_count == 0
             and error_summary.fatal_count == 0
@@ -192,6 +256,11 @@ def run_phase8_runtime(
         "setpoint_after_reset_c": state_summary.after_reset_setpoint_c,
         "final_optimization_result": False,
         "savings_result": False,
+        "EnergyPlus_output_directory": str(output),
+        "EnergyPlus_csv_path": (
+            str(csv_path) if csv_path is not None else None
+        ),
+        "complete_horizon_requested": not require_provider_completion,
     }
     if mode == "phase7_llm":
         summary.update(

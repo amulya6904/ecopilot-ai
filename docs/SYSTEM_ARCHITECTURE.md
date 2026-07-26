@@ -1,281 +1,291 @@
-# System Architecture
+# EcoPilot AI system architecture
 
-## 1. Problem overview
+## Purpose and verified scope
 
-EcoPilot AI must reduce HVAC energy while respecting comfort, indoor-air-quality,
-equipment, peak-demand, and carbon constraints. Official evidence must come from
-matched EnergyPlus simulations, not the lightweight development model.
+EcoPilot AI is an EnergyPlus-first, local, safety-supervised proof of concept.
+It demonstrates bounded evidence retrieval, a typed local-LLM advisory path, a
+real runtime actuator write, deterministic final authority, post-action
+verification, fault recovery, and a reproducible annual comparison.
 
-## 2. Official target architecture
+The retained experiment controls the `SPACE1-1` cooling setpoint in an example
+EnergyPlus model. It is not a real-building deployment, a production optimizer,
+or a safety-certified controller. Genuine PMV/PPD is unavailable in the
+retained People objects; occupied-temperature compliance is the declared proxy.
 
-```text
-EnergyPlus IDF + EPW
-        ↓
-EnergyPlus runtime/API
-        ↓
-Telemetry and log adapter
-        ↓
-Building backend abstraction
-        ↓
-MCP tool server
-        ↓
-Open-source LLM agent
-        ↓
-Structured control proposal
-        ↓
-Deterministic safety validator
-        ↓
-Setpoint/actuator injection
-        ↓
-EnergyPlus next interval
-        ↓
-Dashboard, logs and audit history
-```
-
-This design is implemented through the deterministic Phase 9 safety and recovery
-boundary. Phase 10 optimization and matched savings comparison are not implemented.
-
-## 3. Current development architecture
-
-The implemented path is configuration → `BuildingSimulator` → fixed schedule
-controller → development metrics → CLI/Streamlit. It uses seeded three-zone
-equations and produces 432 records. `LightweightSimulatorBackend` now exposes that
-path through the shared contract.
-
-## 4. Backend abstraction
-
-`BuildingBackend` defines identity, availability, reset, time, completion, step,
-history, and runtime-error operations. Explicit backend creation prevents an
-EnergyPlus request from silently becoming a lightweight run.
-
-## 5. Lightweight simulator role
-
-The lightweight backend is a development harness and fallback for interface, data,
-controller, metric, and UI tests. Composition preserves the existing equations,
-random seed, heat-wave behavior, default actions, and history.
-
-## 6. Phase 4 EnergyPlus backend
-
-The backend validates executable, IDD, IDF, EPW, version, and output readiness;
-runs EnergyPlus as an isolated subprocess; preserves raw outputs and metadata;
-classifies diagnostics; and parses zone and building telemetry. It never silently
-substitutes the lightweight backend.
-
-Zone telemetry contains one row per zone and timestamp. Building telemetry contains
-one row per timestamp for `Electricity:Facility [J](Hourly)` and
-`Whole Building:Facility Total Electricity Demand Rate [W](Hourly)`. This separation
-prevents facility totals from being multiplied by zone count. Electricity uses
-J / 3,600,000 and direct demand uses W / 1,000.
-
-The accepted `weather_location_mismatch` warning records that the example IDF
-Location is Chicago while the EPW is Bengaluru; EnergyPlus uses the EPW location.
-The complete diagnostic is retained in metadata.
-
-## 7. Phase 5 official baseline pipeline
+## End-to-end flow
 
 ```text
-Verified Phase 4 IDF + frozen EPW
-        ↓
-Object-level schedule inspection
-        ↓
-Derived fixed-thermostat IDF
-        ↓
-Phase 4 subprocess runner
-        ↓
-Normalized zone + facility telemetry
-        ↓
-Energy, demand, temperature, PMV-availability and adherence metrics
-        ↓
-Official artifacts + frozen manifest + reproducibility comparison
+EnergyPlus 26.1
+  → runtime/data-transfer telemetry
+  → bounded local MCP tools
+  → local qwen3:4b advisory inference
+  → compact typed proposal
+  → deterministic proposal validation
+  → Phase 9 safety supervisor
+  → discovered cooling-setpoint actuator
+  → post-action observation
+  → reset / fallback / rollback
+  → compatible, aligned Phase 10 comparison
+  → classified evidence and submission dashboard
 ```
 
-Option A preserves the verified example geometry and exact EnergyPlus zone names.
-The central mapping supplies display aliases for the UI. `PLENUM-1` remains in raw
-telemetry and is excluded from occupied comfort and thermostat adherence. The five
-`SPACE*-1` zones use shared Phase 5 cooling and heating schedules. Existing
-occupancy and internal-load schedules are preserved.
+### Trust boundary
 
-The normalizer separates one facility record per timestamp from one record per
-timestamp and EnergyPlus zone. Yearless hourly EnergyPlus timestamps are interpreted
-as interval ends with reference year 2000; `24:00` rolls to the next calendar day.
-Unavailable PMV/PPD stays null and is documented.
+> The LLM never writes directly to an EnergyPlus actuator. All proposals are
+> converted into typed candidates and must pass deterministic validation and
+> safety supervision.
 
-The manifest freezes EnergyPlus version, executable, source/derived/weather hashes,
-run period, schedules, zone mapping, requested and actual outputs, and diagnostics.
-The reproducibility checker compares exact inputs, telemetry shapes, warnings,
-energy, peak demand, thermostat adherence, temperature compliance, and PMV
-compliance when available.
+The Phase 9 supervisor is the final authority. The annual quantitative result
+uses a deterministic one-zone policy so the controlled run can be reproduced
+without placing local-model inference in the EnergyPlus callback path.
 
-## 8. Telemetry schema
+## 1. EnergyPlus-first design
 
-`BuildingState` carries timestamps, source, zone identity, indoor/outdoor
-temperature, occupancy, humidity, optional CO2, optional PMV, comfort status,
-setpoints, fan/ventilation controls, power, interval/cumulative energy, optional
-facility peak demand, price, and carbon intensity. Unavailable telemetry is `None`,
-not zero.
+EnergyPlus supplies official building physics, weather response, schedules,
+equipment behavior, zone state, meters, warnings, and runtime callbacks. The
+lightweight simulator remains a development tool and is never used for the
+official Phase 10 savings claim.
 
-## 9. Runtime-error schema
+The Phase 5 baseline freezes:
 
-`RuntimeErrorRecord` contains timestamp, source, severity, code, message, a bounded
-raw excerpt, and recoverability. It is suitable for later MCP error tools without
-putting an entire log in a model prompt.
+- EnergyPlus version;
+- immutable base-model and derived-model SHA-256 hashes;
+- weather SHA-256 hash;
+- annual run period and reporting frequency;
+- occupancy, internal-load, and zone-mapping fingerprints;
+- available telemetry and error counts.
 
-## 10. Control-action schema
+The compatible controlled run executes the same derived Phase 5 model and
+weather file.
 
-`ControlAction` identifies the zone, cooling/heating setpoints, optional fan and
-ventilation values, action source, reason, confidence, request time, and validation
-result. Current actions are `baseline_schedule` or `fixed_test_action`, never AI.
+## 2. Backend abstraction
 
-## 11. MCP tool architecture
+The project backend interface separates development simulation from official
+EnergyPlus execution. Backend status and artifact classification travel with
+results, preventing a lightweight result from being relabeled as official.
+EnergyPlus runners are explicit commands, not import-time or page-load side
+effects.
 
-Phase 6 bounded tools read summarized state, constraints, demand, carbon, recent
-actions, and relevant errors. Tools enforce input schemas and least authority.
-They cannot write schedules, actuators, thermostats, or setpoints.
+## 3. MCP communication layer
 
-## 12. LLM prompting approach
+The local MCP server uses stdio and exposes bounded tools and resources for:
 
-The Phase 7 open-source model receives a compact system policy, current targets and
-constraints, summarized official evidence, relevant errors, and bounded tool
-schemas. Prompts distinguish observations from unavailable fields and require
-explicit reasons.
+- system and EnergyPlus readiness;
+- official baseline summary and manifest;
+- latest run metadata;
+- zone and facility telemetry;
+- comfort and thermostat evidence;
+- available outputs and runtime errors.
 
-## 13. Structured response format
+The default tool surface is read-only. A separately gated baseline runner is
+the only execution-class operation; no MCP actuator or optimization tool
+exists. Tool requests, classifications, timing, and bounded results are written
+to the audit log.
 
-The agent response will be machine-validated JSON matching control proposal
-schemas, including per-zone values, reason, confidence, horizon, and constraint
-acknowledgements. Natural-language prose will not be accepted as an actuator input.
+### Tool-result bounding
 
-## 14. Safety-validation layer
+Telemetry tools accept date/aggregation/row limits. The bridge applies an
+allowlist and character bounds before evidence enters model context. The model
+receives compact summaries rather than raw annual CSVs. Required evidence is
+retrieved through a deterministic plan in the live CPU path, which removes an
+unnecessary tool-selection inference round while preserving MCP provenance.
 
-Deterministic checks will enforce absolute equipment bounds, rate limits, PMV or
-temperature fallback constraints, CO2/ventilation constraints, demand policy,
-conflict handling, stale-state rejection, and operator overrides. Rejected actions
-fall back to a known schedule and are audited.
+## 4. Local LLM advisory layer
 
-## 15. Forward injection
+Ollama serves `qwen3:4b` locally. Remote model providers and non-local Ollama
+hosts are rejected by settings validation.
 
-Phase 8 maps a validated cooling-setpoint candidate to the selected Runtime API
-actuator and applies it before the next interval. Phase 9 now provides final
-deterministic authority and post-action verification. Phase 5 remains the
-deterministic fallback schedule.
+The advisory prompt has two logical stages:
 
-## 16. Latency-management strategy
+1. a stable system contract defining advisory scope, evidence requirements,
+   prohibited claims, and output semantics;
+2. a compact evidence prompt containing only the official facts needed for a
+   decision.
 
-Agent calls will have a timeout, bounded retries, and a deterministic fallback
-schedule. Telemetry will be summarized to the useful horizon rather than sending
-every record. Full raw logs will not be included in every prompt. A late response
-will be rejected for its expired interval.
+The final model request contains exactly those two messages and a JSON schema.
+It has no tools and requests only:
 
-## 17. Long-log management
+```json
+{
+  "energyplus_zone_name": "SPACE1-1",
+  "proposed_setpoint_c": 22.5,
+  "objective": "reduce_peak_demand",
+  "confidence": 0.65,
+  "reason": "A conservative adjustment may reduce cooling demand while preserving comfort."
+}
+```
 
-The runtime layer will extract errors, summarize repeated warnings, retain raw logs
-on disk, send only relevant excerpts to the LLM, and preserve references to the
-full log files for operators and audits.
+Python adds identifiers, timestamps, classifications, evidence references, and
+other deterministic metadata. Hidden chain-of-thought is neither requested nor
+stored.
 
-## 18. Baseline-versus-agent comparison
+### Latency and timeout management
 
-Official runs must use identical EnergyPlus IDF, EPW, timestep, warm-up, seeds where
-applicable, output variables, and evaluation windows. Reports will compare total
-kWh, percentage reduction, peak demand, cost/carbon, PMV compliance, IAQ, and
-violations. Development outputs remain separate.
+The live demonstration disables Qwen thinking and limits request time, total
+agent time, tool rounds, retries, context, and generated tokens. Initial
+readiness, MCP execution, final generation, validation, and total duration are
+recorded separately. Local latency remains dependent on CPU, memory, model
+warmth, and thermal conditions.
 
-## 19. Failure recovery
+On timeout, the UI stops progress, returns a typed
+`AGENT_RUN_TIMEOUT` result, and states that no action was applied. An advisory
+fallback remains explicit rather than being relabeled as model output.
 
-The coordinator will detect runtime failure, timeout, invalid telemetry, malformed
-agent output, validation rejection, and actuator failure. It will record the error,
-apply a deterministic safe schedule when possible, stop on unrecoverable
-EnergyPlus errors, and surface status without fabricating telemetry.
+## 5. Asynchronous and non-blocking control design
 
-## 20. IDF versioning
+Ollama and MCP work is orchestrated asynchronously outside EnergyPlus runtime
+callbacks. The callback path consumes a prevalidated candidate or a
+deterministic policy decision and performs only bounded telemetry, rule, handle,
+and actuator operations. This avoids pausing EnergyPlus physics for
+hardware-dependent inference.
 
-The source baseline will live under `energyplus/models/`. Generated or modified
-runtime IDFs will live under `energyplus/models/modified/` with run IDs, timestamps,
-input hashes, and provenance. Source IDFs are not globally ignored.
+The Streamlit app likewise starts expensive operations only from explicit
+buttons. Page imports and navigation do not call Ollama or execute EnergyPlus.
 
-## 21. Audit logging
+## 6. Typed advisory proposal
 
-Each interval will link source telemetry, summarized prompt context, tool calls,
-model response, proposed action, validation outcome, applied override, runtime
-errors, and resulting telemetry. Logs must make fallback and human intervention
-visible. Phase 7, Phase 8, and Phase 9 write separate bounded audit streams and
-linked artifact bundles.
+Pydantic schemas constrain zone name, setpoint, objective, confidence, reason,
+classification, and validation results. The final proposal is rejected when it
+is malformed, incomplete, unsupported by official evidence, or outside the
+advisory contract. Retries are bounded and the live UI permits only one retry.
 
-Phase 5 establishes the official fixed-schedule EnergyPlus baseline using the
-existing verified EnergyPlus example model. Original EnergyPlus zone identifiers
-are preserved, while display aliases are used for presentation. This phase does not
-implement MCP, an open-source LLM, actuator injection, autonomous control,
-optimization, or savings comparison.
+Advisory output is not described as an applied action, an optimized result, or
+a savings result.
 
-## Phase 6 MCP boundary
+## 7. Deterministic validation
+
+Python validates:
+
+- exact zone identity and supported actuator target;
+- numeric ranges and cooling/heating deadband;
+- evidence classification and completeness;
+- context freshness and required telemetry;
+- objective and confidence shape;
+- prompt-injection-resistant tool boundaries;
+- advisory-only execution flags.
+
+Only a typed, valid candidate proceeds to Phase 9.
+
+## 8. Safety supervisor
+
+The supervisor evaluates occupied temperature or the declared proxy, demand
+guardrails, telemetry freshness, maximum change, rate limits, oscillation,
+actuator state, and recovery conditions. It can produce:
+
+- approve;
+- clamp;
+- hold;
+- reject;
+- rollback;
+- emergency fallback.
+
+Twenty-two of twenty-two fault scenarios pass, all outcomes are exercised, and
+the accepted safety runs contain zero severe and zero fatal errors. Demand
+thresholds are prototype project guardrails and require site commissioning.
+
+## 9. Actuator discovery and runtime callback design
+
+The runtime layer discovers exact Data Transfer API handles rather than relying
+on a guessed numeric handle. The verified identifier is:
 
 ```text
-MCP client
-    | local stdio (official mcp==1.28.1 SDK)
-FastMCP server
-    | strict validation, response limits, audit, error translation
-MCPApplicationContext
-    +-- EnergyPlus discovery/backend
-    +-- existing Phase 5 official baseline runner
-    +-- frozen JSON/CSV artifacts and manifest
-    +-- normalized telemetry, metrics, and diagnostics
+Zone Temperature Control | Cooling Setpoint | SPACE1-1
 ```
 
-The MCP layer loads persisted normalized products rather than duplicating raw
-EnergyPlus parsing or baseline metric calculation. Its only execution tool invokes
-`run_energyplus_baseline()` with configured paths under a single-process lock.
-No MCP tool modifies a schedule, actuator, thermostat, or setpoint.
+Callbacks are registered at deterministic simulation points. They:
 
-Phase 6 exposes the verified EnergyPlus and official baseline capabilities through a local MCP server. The server provides bounded, validated tools and read-only resources. It does not yet include an open-source LLM, autonomous reasoning, actuator injection, optimization, or closed-loop control.
+1. wait until API data is ready;
+2. resolve and cache handles;
+3. capture current telemetry;
+4. request a bounded safety decision;
+5. write only an approved setpoint;
+6. observe the later actuator value;
+7. record action, decision, and verification identifiers;
+8. reset the actuator to baseline control when required.
 
-## Phase 7 advisory-agent boundary
+Callback exceptions are captured as runtime evidence and fail the acceptance
+gate; they are not silently suppressed.
 
-```text
-local Ollama
-    -> bounded structured chat
-Phase 7 AdvisoryAgent
-    -> 12 read-only tools over official MCP stdio
-Phase 6 official EnergyPlus baseline data
-    -> strict schema and deterministic validator
-advisory artifacts and compact JSONL audit
-```
+## 10. Rollback and fallback
 
-Phase 7 connects a local open-source LLM to the verified Phase 6 MCP tool layer.
-The Phase 7 component remains advisory. Phases 8–9 separately implement candidate
-conversion, deterministic safety authority, runtime control, observation, and
-recovery. Optimization results and savings comparison remain unimplemented.
+The fixed Phase 5 schedule is the safe default. Missing/stale telemetry, unsafe
+comfort or demand state, oscillation, actuator mismatch, provider failure, or
+explicit recovery rules prevent or reverse control. Fallback restores the
+baseline behavior. Rollback and emergency recovery have separately classified
+events and acceptance checks.
 
-## Phase 8–9 verified runtime and safety path
+## 11. Evidence and artifact classification
 
-```text
-Phase 7 structured advisory (optional)
-        |
-        v
-Phase 8 executable candidate + preliminary runtime validation
-        |
-        v
-Phase 9 strict SafetyStateSnapshot
-        |
-        v
-Deterministic rule evaluation and SafetyDecision
-        |
-        +-- approve / approve_with_clamp --> Phase 8 single actuator write
-        |
-        +-- hold / reject / fallback / emergency_fallback
-                                             |
-                                             v
-                                  Phase 8 baseline reset
-        |
-        v
-Phase 9 post-action verification --> rollback/emergency evidence
-```
+Major evidence classes include:
 
-The callback before HVAC managers owns the one actuator application site. The
-end-zone-timestep callback observes the resulting cooling setpoint, populates the
-linked Phase 8 `observed_setpoint_after_application` field, and invokes the Phase 9
-post-action verifier. Phase 9 never creates a second actuator mechanism.
+- development-only simulation and baseline;
+- official EnergyPlus baseline;
+- verified local MCP audit;
+- LLM advisory proposal;
+- official EnergyPlus safety-supervised controlled evaluation;
+- deterministic safety validation;
+- official EnergyPlus quantitative comparison;
+- reproducibility report;
+- submission document and manifest.
 
-Phase 9 adds deterministic safety, comfort, PMV, demand, freshness, rate, and
-actuator-health supervision to the verified Phase 8 runtime-control path. PMV is
-used only when genuinely available; otherwise the system explicitly uses an
-occupied-temperature proxy. This phase validates safety intervention and recovery,
-not final optimization or savings.
+Classifications, run IDs, source, success, hashes, and relationships are
+persisted. The UI displays project-relative paths and only offers downloads from
+approved repository evidence roots.
+
+## 12. Comparison compatibility gate
+
+Phase 10 refuses a savings claim unless required checks pass for:
+
+- EnergyPlus backend, source, version, and success;
+- accepted baseline and controlled classifications;
+- base and derived model relationship;
+- weather, run period, and reporting frequency;
+- occupancy, internal loads, and zone mapping;
+- complete expected intervals and critical telemetry;
+- severe/fatal error policy;
+- verified control injection and enabled safety authority.
+
+After compatibility, 8,760 facility intervals and 52,560 zone records are
+aligned. Metrics are computed from full-resolution artifacts; chart
+downsampling affects display only.
+
+## 13. Log and error handling
+
+MCP calls, agent runs, control actions, safety decisions, callback errors,
+fallbacks, rollbacks, EnergyPlus warnings, manifests, telemetry, and comparison
+checks have dedicated artifacts. User-facing errors explain the affected
+feature and safe next step; technical diagnostics remain in expanders.
+Audit evidence is never deleted by cleanup.
+
+Generated runtime artifacts may contain machine-local provenance paths required
+for reproducibility. Dashboard paths and documentation are repository-relative,
+and `.env` plus local logs/caches are ignored.
+
+## 14. Reproducibility
+
+The reproducibility verifier runs the controlled annual policy again and builds
+a second compatible comparison. It requires matching model/weather hashes,
+telemetry shape, action counts, comparison status, and energy/peak/comfort
+metrics within `1e-6`. The dashboard declares reproducibility only when the
+displayed comparison ID is exactly the second ID in the passing report.
+
+The preserved verified result is:
+
+- baseline facility electricity: `58,568.21190808615 kWh`;
+- controlled facility electricity: `58,562.58583227383 kWh`;
+- difference: `5.626075812324416 kWh` (`0.009606022839067856%`);
+- occupied-temperature proxy change: `+0.16718913270637614` percentage points;
+- peak-demand change: effectively unchanged;
+- severe/fatal errors: `0 / 0`.
+
+## 15. Technical scope and assumptions
+
+- One zone is controlled conservatively in a retained example model.
+- PMV/PPD is genuinely unavailable; no PMV value is fabricated.
+- Cost uses an INR 8/kWh project assumption.
+- Carbon uses a 708 g CO₂/kWh project assumption.
+- The local LLM is advisory and hardware-dependent.
+- The final annual comparison uses a deterministic reproducible policy.
+- The measured facility-level effect is small and peak demand is unchanged.
+- Multi-zone coordination, native-PMV validation, site-calibrated thresholds,
+  real tariffs, and a read-only building shadow deployment remain future work.

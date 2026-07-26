@@ -185,11 +185,16 @@ def _render_charts(
 
 
 def render_phase9(st: Any) -> None:
-    st.header("Phase 9 — Safety, PMV, and Constraints")
     st.warning(
         "This phase validates deterministic safety intervention and recovery. "
         "It is not final optimization, a savings comparison, or production "
         "safety certification."
+    )
+    st.info(
+        "Genuine PMV/PPD is unavailable in the retained model, so occupied "
+        "temperature is the declared comfort proxy. Demand warning and critical "
+        "thresholds are prototype project guardrails, not a site-commissioned limit.",
+        icon=":material/info:",
     )
     availability = inspect_runtime_availability()
     directory, metadata, summary = _latest_run()
